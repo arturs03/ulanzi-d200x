@@ -6,7 +6,7 @@
 - Keep the default reader-only behavior when the checkbox is off. There is no GPU polling, repeated page upload, retry or automatic reconnect.
 - Bound keep-awake writes to 3 seconds. A read or write failure stops both operations; Stop/exit cancels pending work. Automated failure/cancellation checks pass.
 
-Physical timeout prevention, possible mode-refresh blinking and overlay removal still need confirmation.
+The user physically confirmed that the Key 13 overlay is gone. Physical timeout prevention and possible mode-refresh blinking still need confirmation; the follow-up log has no keep-awake entries and the user still reports the one-minute fallback.
 
 ## 0.1.0-preview.2
 
@@ -14,7 +14,7 @@ Physical timeout prevention, possible mode-refresh blinking and overlay removal 
 - Compose key 13 at its double-width aspect ratio and span its preview across two grid cells.
 - Reject invalid display bundles before emitting any mode command. Mode commands are bounded to the explicit transfer; no background polling, retries or firmware flashing are added.
 
-Protocol and desktop checks pass. Correction of the physical key 13 overlay awaits user testing.
+Protocol and desktop checks pass. The user subsequently confirmed the physical Key 13 overlay correction on preview 3.
 
 ## 0.1.0-preview.1
 

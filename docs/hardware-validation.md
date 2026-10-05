@@ -9,16 +9,16 @@ Evidence: user-supplied app log, with local times 11:06:58–11:08:20 (Europe/Ri
 | HID detection | Main interface usage 12/1, reports 1025/1025, report ID 0; separate keyboard interface 1/6, reports 9/2 | Confirmed |
 | LCD key input | Initial log: indices 0–6 and 10–13; follow-up log at 11:13:06–11:13:08: indices 7, 8 and 9, each with press/release | Confirmed for all 14 keys |
 | Dial rotations | Left/right events for indices 17, 18 and 19 | Confirmed |
-| Dial presses | No dial press/release events in the supplied log | Pending |
+| Dial presses | Follow-up preview 3 log shows press/release on 18 and 19 | Confirmed for 18 and 19; 17 pending |
 | Side buttons | Press/release on indices 15 and 16 | Confirmed |
 | Display transport | App reported Starter transfer completed, 21,203 bytes | Completed from the app's perspective |
-| Physical display | User subsequently answered yes to the numbered-label confirmation, then reported built-in CPU/RAM/GPU gauges behind Key 13 | Labels confirmed; Key 13 overlay correction pending |
+| Physical display | User confirmed numbered labels and subsequently confirmed only the Key 13 label remains on preview 3 | Labels and Key 13 overlay correction confirmed |
 | Action execution | Installed Starter profile has only none actions; no action execution entries supplied | Pending |
 | Session errors | No error/disconnection entries in the supplied excerpt | No error shown in this short test |
 
 Input continued after the display transfer. This supports successful communication following that transfer, but does not establish unplug/replug, sleep/wake, Studio restoration or crash-free operation during extended use.
 
-Next: check dial presses and the preview 2 overlay correction, then one simple action, followed by lifecycle and normal-workload sessions. Changes to key placement and daily-use mappings require the user's desired layout.
+Next: verify the one-minute fallback with keep-awake enabled, check dial 17 press, then one simple action, followed by lifecycle and normal-workload sessions. Changes to key placement and daily-use mappings require the user's desired layout.
 
 ## Key 13 overlay correction — preview 2
 
@@ -26,7 +26,7 @@ The initial app sent the icon bundle without selecting the separate wide-screen 
 
 Preview 2 selects image mode immediately before the icon bundle and restates it once afterward. Unused gauge/time fields are protocol placeholders in image mode, not displayed monitoring readings. This occurs only on an explicit page transfer, with the existing cancellation/timeout and no automatic retry. The wide icon is composed at 392×196 and encoded at 196×196 for the device's horizontal stretch; the app preview also spans both columns.
 
-Tests verify mode selection, framing, bounded command count, ZIP preservation and rejecting invalid bundles before mode changes. Physical removal of the overlay must still be confirmed after updating and resending the page.
+Tests verify mode selection, framing, bounded command count, ZIP preservation and rejecting invalid bundles before mode changes. The user physically confirmed removal of the overlay on preview 3: only the Key 13 label remains.
 
 ## Return to default graphics after one minute — preview 3
 
@@ -37,3 +37,5 @@ An independent [D200 SDK's heartbeat documentation](https://github.com/mindlss/o
 Preview 3 adds a checkbox, off by default, that sends one image-mode/time packet every 5 seconds while the user actively listens after sending a page. Separate read and write handles avoid sharing an outstanding read with a write on one stream; both remain inside the same guarded app session. A 3-second write timeout or any read/write failure ends both operations. Stop/exit cancels them. No page is automatically reuploaded and there is no reconnect/retry loop.
 
 Test: send the profile, enable Keep device awake, start listening with actions disabled, and wait at least five minutes. Confirm the page remains, inputs continue and the wide screen does not blink. Stop afterward and compare whether the original approximately one-minute fallback returns. A short successful run is not proof of overall stability.
+
+The next preview 3 log at 11:31:31–11:32:18 records a 23,007-byte Starter transfer with image mode, input on all 14 keys, all dial rotation directions, both side buttons, and presses on dials 18 and 19. The user still reports the one-minute fallback. No Keep-awake active or sent messages appear in this excerpt; a test with keep-awake enabled remains pending. These entries do not prove a firmware reset, RAM clearing or Windows crash.
