@@ -13,6 +13,7 @@ internal sealed class MainForm : Form
     readonly Button stop = new() { Text = "Stop", AutoSize = true, Enabled = false };
     readonly Button sendPage = new() { Text = "Send profile to device", AutoSize = true };
     readonly CheckBox actions = new() { Text = "Enable configured actions", AutoSize = true, Padding = new Padding(8, 7, 0, 0) };
+    readonly CheckBox keepAwake = new() { Text = "Keep device awake (experimental)", AutoSize = true, Padding = new Padding(8, 7, 0, 0) };
     readonly NotifyIcon tray;
     readonly Font keyFont = new("Segoe UI", 10, FontStyle.Bold);
     DeckProfile profile = new();
@@ -21,6 +22,7 @@ internal sealed class MainForm : Form
     Task? sessionTask;
     int actionsEnabled;
     bool closing;
+    bool pageSent;
     string ProfilePath => Path.Combine(profileDirectory, "profile.json");
 
     public MainForm(string? configurationDirectory = null)
@@ -40,7 +42,7 @@ internal sealed class MainForm : Form
         layout.RowStyles.Add(new RowStyle(SizeType.Percent, 38));
         layout.Controls.Add(new Label { Text = "D200X Direct", Font = new Font("Segoe UI", 22, FontStyle.Bold), AutoSize = true });
         var controls = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill, WrapContents = true };
-        controls.Controls.AddRange([start, stop, sendPage, actions]);
+        controls.Controls.AddRange([start, stop, sendPage, actions, keepAwake]);
         AddButton(controls, "Inspect USB", Inspect);
         AddButton(controls, "Hide to tray", Hide);
         layout.Controls.Add(controls);
@@ -145,7 +147,7 @@ internal sealed class MainForm : Form
     }
 
     void ReleaseDevice() { deviceOwner?.ReleaseMutex(); deviceOwner?.Dispose(); deviceOwner = null; }
-    void SetBusy(bool busy) { start.Enabled = sendPage.Enabled = !busy; stop.Enabled = busy; }
+    void SetBusy(bool busy) { start.Enabled = sendPage.Enabled = keepAwake.Enabled = !busy; stop.Enabled = busy; }
 
     async Task StartSession()
     {
@@ -154,20 +156,25 @@ internal sealed class MainForm : Form
         {
             AcquireDevice();
             var device = SelectDevice();
+            var sendKeepAwake = keepAwake.Checked;
+            if (sendKeepAwake && !pageSent) throw new IOException("Send your profile to the device first, then start with Keep device awake selected.");
             session = new CancellationTokenSource();
             var token = session.Token;
             SetBusy(true);
-            status.Text = "Listening — press buttons and turn dials. Actions run only when enabled.";
+            status.Text = sendKeepAwake ? "Listening — keep-awake enabled; actions run only when enabled." : "Listening — press buttons and turn dials. Actions run only when enabled.";
             sessionTask = Task.Run(async () =>
             {
                 using var stream = HidDevice.Open(device, false);
+                using var writer = sendKeepAwake ? HidDevice.Open(device, true) : null;
                 var report = new byte[device.InputLength];
                 var held = new HashSet<int>();
-                while (!token.IsCancellationRequested)
+                async Task ReadInput(CancellationToken readToken)
+                {
+                while (!readToken.IsCancellationRequested)
                 {
                     int length;
-                    try { length = await stream.ReadAsync(report, token); }
-                    catch (OperationCanceledException) when (token.IsCancellationRequested) { break; }
+                    try { length = await stream.ReadAsync(report, readToken); }
+                    catch (OperationCanceledException) when (readToken.IsCancellationRequested) { break; }
                     if (length == 0) throw new IOException("Device disconnected. Reconnect it, then start again.");
                     var input = Protocol.ParseInput(report.AsSpan(0, length));
                     if (input is null) { Log($"Unrecognized input report ({length} bytes)."); continue; }
@@ -180,11 +187,25 @@ internal sealed class MainForm : Form
                     try { ActionRunner.Run(action); Log($"Ran {action.Type} for {input.Index}."); }
                     catch (Exception error) { Log($"Action failed: {error.Message}"); }
                 }
+                }
+                if (writer is null) await ReadInput(token);
+                else
+                {
+                    Log("Keep-awake active: one small display/time command every 5 seconds; no repeated page uploads.");
+                    var count = 0;
+                    await DeviceSession.RunPairAsync(ReadInput, ct => DeviceSession.KeepAwakeAsync(async writeToken =>
+                    {
+                        await writer.WriteAsync(Protocol.WindowsReport(Protocol.ImageModePacket(TimeOnly.FromDateTime(DateTime.Now))), writeToken);
+                        await writer.FlushAsync(writeToken);
+                        count++;
+                        if (count == 1 || count % 12 == 0) Log($"Keep-awake sent: {count} commands. Report any flicker or return to the default screen.");
+                    }, DeviceSession.KeepAwakeInterval, ct), token);
+                }
             }, token);
             await sessionTask;
         }
-        catch (OperationCanceledException) { }
-        catch (Exception error) { Log($"Device session stopped: {error.Message}"); }
+        catch (OperationCanceledException) when (session?.IsCancellationRequested == true) { }
+        catch (Exception error) { pageSent = false; Log($"Device session stopped: {error.Message}"); }
         finally
         {
             sessionTask = null;
@@ -219,8 +240,9 @@ internal sealed class MainForm : Form
                 Log($"Sent {snapshot.Name} ({bundle.Length} bytes); wide screen set to image mode. Confirm the physical display; reopening Studio is expected to restore its page.");
             }, token);
             await sessionTask;
+            pageSent = true;
         }
-        catch (Exception error) { Log($"Display transfer stopped: {error.Message}"); }
+        catch (Exception error) { pageSent = false; Log($"Display transfer stopped: {error.Message}"); }
         finally
         {
             sessionTask = null;

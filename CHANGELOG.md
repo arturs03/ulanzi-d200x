@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.0-preview.3
+
+- Add an opt-in experimental Keep device awake mode for the reported one-minute return to stock graphics. It requires a profile transfer in the current app session, then sends one small image-mode/time packet every 5 seconds while listening.
+- Keep the default reader-only behavior when the checkbox is off. There is no GPU polling, repeated page upload, retry or automatic reconnect.
+- Bound keep-awake writes to 3 seconds. A read or write failure stops both operations; Stop/exit cancels pending work. Automated failure/cancellation checks pass.
+
+Physical timeout prevention, possible mode-refresh blinking and overlay removal still need confirmation.
+
 ## 0.1.0-preview.2
 
 - Select image mode for the special wide screen before and after an explicit page transfer, to disable retained CPU/RAM/GPU gauges behind key 13.

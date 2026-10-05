@@ -42,6 +42,8 @@ public static class SelfTests
             && Encoding.ASCII.GetString(display[0], 8, (int)BinaryPrimitives.ReadUInt32LittleEndian(display[0].AsSpan(4))) == "2|0|0|00:00:00|0",
             "wide screen selects image mode, not gauges");
         Check(display[^1].SequenceEqual(display[0]), "wide mode restored after bundle");
+        var timedMode = Protocol.ImageModePacket(new TimeOnly(12, 34, 56));
+        Check(Encoding.ASCII.GetString(timedMode, 8, (int)BinaryPrimitives.ReadUInt32LittleEndian(timedMode.AsSpan(4))) == "2|0|0|12:34:56|0", "keep-awake preserves image mode with current time");
         Check(display.Skip(1).Take(pieces.Length).Zip(pieces).All(pair => pair.First.SequenceEqual(pair.Second)), "display mode does not corrupt ZIP packets");
         try { Protocol.DisplayPackets(new byte[3000]).First(); throw new Exception("Malformed display emitted a mode command."); }
         catch (ArgumentException) { checks++; }
@@ -82,6 +84,44 @@ public static class SelfTests
         Reject("""{"keys":[{"index":0,"action":{"type":"none","keys":["A"]}}]}""", "unused action fields");
         Reject("""{"keys":null}""", "null profile arrays");
         Reject("""{"sideButtons":[{"index":17}]}""", "dial mapped as side button");
+        async Task CheckKeepAwake()
+        {
+            using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+            var writes = 0;
+            var readStopped = false;
+            try
+            {
+                await DeviceSession.RunPairAsync(async ct =>
+                {
+                    try { await Task.Delay(Timeout.Infinite, ct); }
+                    finally { readStopped = true; }
+                }, ct => DeviceSession.KeepAwakeAsync(_ =>
+                {
+                    writes++;
+                    throw new IOException("simulated write failure");
+                }, TimeSpan.FromMilliseconds(10), ct), deadline.Token);
+                throw new Exception("Writer failure was swallowed.");
+            }
+            catch (IOException) { Check(writes == 1 && readStopped, "writer failure cancels reader without retry"); }
+            writes = 0;
+            try
+            {
+                await DeviceSession.RunPairAsync(_ => throw new IOException("simulated read failure"),
+                    ct => DeviceSession.KeepAwakeAsync(_ => { writes++; return Task.CompletedTask; }, TimeSpan.FromMilliseconds(50), ct), deadline.Token);
+                throw new Exception("Reader failure was swallowed.");
+            }
+            catch (IOException) { Check(writes == 0, "reader failure stops keep-awake before any writes"); }
+            using var cancelled = new CancellationTokenSource();
+            cancelled.Cancel();
+            try
+            {
+                await DeviceSession.KeepAwakeAsync(_ => { writes++; return Task.CompletedTask; }, TimeSpan.FromMilliseconds(10), cancelled.Token);
+                throw new Exception("Cancelled heartbeat continued.");
+            }
+            catch (OperationCanceledException) { Check(writes == 0, "cancelled keep-awake sends no packets"); }
+            Check(DeviceSession.KeepAwakeInterval == TimeSpan.FromSeconds(5), "keep-awake limited to 12 small commands per minute");
+        }
+        CheckKeepAwake().GetAwaiter().GetResult();
         Console.WriteLine($"PASS: {checks} protocol, input and image checks. No hardware was accessed.");
     }
 }

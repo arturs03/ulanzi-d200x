@@ -10,6 +10,7 @@ Current safeguards:
 - No AMD telemetry polling or embedded browser/game rendering engine.
 - Known Studio process and concurrent direct sessions are checked before active device access. Keep other third-party controllers closed, and do not launch Studio during a direct session.
 - Display transfers are explicit, built before opening the writable device, and have cancellation/timeouts. There are no automatic retry or reconnect loops.
+- Preview 3's optional Keep device awake checkbox defaults off. When explicitly selected after a page transfer, an active session sends at most one small image-mode/time update every 5 seconds, with a 3-second write deadline. Failure on either the reader or writer cancels both; there are no write retries. This adds no telemetry polling or repeated ZIP uploads. Physical idle prevention/flicker remains unverified.
 - I/O failures stop the device session. Action errors are reported separately. Physical recovery remains unverified.
 
 Validation still required:

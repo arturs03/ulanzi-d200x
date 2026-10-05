@@ -27,3 +27,13 @@ The initial app sent the icon bundle without selecting the separate wide-screen 
 Preview 2 selects image mode immediately before the icon bundle and restates it once afterward. Unused gauge/time fields are protocol placeholders in image mode, not displayed monitoring readings. This occurs only on an explicit page transfer, with the existing cancellation/timeout and no automatic retry. The wide icon is composed at 392×196 and encoded at 196×196 for the device's horizontal stretch; the app preview also spans both columns.
 
 Tests verify mode selection, framing, bounded command count, ZIP preservation and rejecting invalid bundles before mode changes. Physical removal of the overlay must still be confirmed after updating and resending the page.
+
+## Return to default graphics after one minute — preview 3
+
+The user supplied a photo of stock key graphics and the Ulanzi Studio logo, then confirmed the transition occurs about one minute after sending a page. This does not prove that device RAM was cleared. At inspection, the installed app remained preview 1, Windows saw the HID device with OK status, and the recent System event query had no relevant USB entries. That snapshot does not exclude a transient disconnect. Whether input continues during the fallback is still unknown.
+
+An independent [D200 SDK's heartbeat documentation](https://github.com/mindlss/open-ulanzi-d200/blob/main/docs/en.md#live-widget-and-heartbeat) describes idle sleep when widget/time updates cease and uses command 0x0006 as a keep-awake update. It targets D200; applying the same mechanism to D200X is an inference requiring validation. Another D200X implementation avoids repeatedly restating image mode because it can blink, so this is opt-in and experimental.
+
+Preview 3 adds a checkbox, off by default, that sends one image-mode/time packet every 5 seconds while the user actively listens after sending a page. Separate read and write handles avoid sharing an outstanding read with a write on one stream; both remain inside the same guarded app session. A 3-second write timeout or any read/write failure ends both operations. Stop/exit cancels them. No page is automatically reuploaded and there is no reconnect/retry loop.
+
+Test: send the profile, enable Keep device awake, start listening with actions disabled, and wait at least five minutes. Confirm the page remains, inputs continue and the wide screen does not blink. Stop afterward and compare whether the original approximately one-minute fallback returns. A short successful run is not proof of overall stability.

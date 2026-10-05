@@ -6,6 +6,8 @@ Click **Reload profile** after saving. Invalid profiles are rejected and the las
 
 The app starts stopped, with actions disabled. Click **Start listening** to log physical input. Only check **Enable configured actions** when you want your mappings to execute. No app configures Discord keybinds for you; its corresponding hotkey must also be configured in Discord. Hotkeys use the current foreground application and may be rejected by elevated apps.
 
+Keep device awake is a separate experimental app checkbox, not a JSON action. It defaults off. After sending a profile, select it before listening to send one small image-mode/time update every 5 seconds while the session runs. It is intended to test the reported one-minute idle fallback; physical behavior and possible flicker still need verification. Do not add unrecognized keep-awake fields to profiles.
+
 ## Prompt to give an LLM
 
 Copy this instruction, your current profile and `profiles/profile.schema.json` into your chat:
