@@ -2,7 +2,7 @@
 
 An independent Windows app for controlling a **Ulanzi D200X** directly over USB, with profiles that ChatGPT or another LLM can edit. Includes a desktop interface, tray icon, per-user installer and documented JSON configuration. No Ulanzi Studio plugins, LLM API account or scripting engine are required.
 
-**Experimental preview:** device enumeration is verified on a D200X, and automated checks pass. Actual physical button/dial events, display transfers and mapped actions still require device validation. This is not yet a verified complete Studio replacement or a fix for PC crashes.
+**Experimental preview:** device enumeration, a subset of physical key inputs, all three dials turning and both side buttons are verified on a D200X. A profile transfer completed; its physical appearance still needs confirmation. Automated checks pass. Mapped actions and long-term stability remain unverified. This is not yet a verified complete Studio replacement or a fix for PC crashes.
 
 ## Install
 
@@ -62,7 +62,8 @@ Stability is a core requirement: preventing application errors, black screens an
 
 - Observed D200X: VID `2207`, PID `0019`, compatible input/output reports of 1025 bytes including Windows report ID 0. The separate keyboard interface is not used.
 - Input decoding, report framing, ZIP transfer boundaries/reassembly, PNG generation, JSON validation and action selection have automated checks.
-- Physical controls, physical images, action delivery, reconnect behavior, sleep/wake and long-term reliability are not yet verified.
+- Physical-test evidence: keys 0–6 and 10–13 have press/release events; dials 17–19 turn both ways; side buttons 15–16 have press/release events. Keys 7–9 and dial presses remain to be checked. See [hardware validation](docs/hardware-validation.md).
+- A Starter profile display transfer completed. Correct physical images, action delivery, reconnect behavior, sleep/wake and long-term reliability remain unverified.
 - One active profile; no dynamic sensors, custom image files, multiple pages, custom dial-area display, automatic reconnect or automatic startup yet.
 - The app refuses active device access while the known Studio process runs and prevents concurrent sessions with its diagnostic CLI. Keep other third-party controllers closed too.
 - The desktop app uses standard Windows controls and CPU/GDI image generation. It does not poll AMD telemetry or initialize a browser/game rendering engine. This does not guarantee protection against GPU driver, USB, kernel or hardware failures.

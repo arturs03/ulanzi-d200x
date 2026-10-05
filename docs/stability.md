@@ -14,8 +14,8 @@ Current safeguards:
 
 Validation still required:
 
-1. Read-only physical button/dial input, with actions disabled.
-2. One explicit display transfer, including disconnection/recovery behavior.
+1. Complete physical input coverage: keys 7–9 and all dial presses are still missing from the first supplied test log. Other key inputs, dial rotations and side buttons are confirmed; the Starter mappings were all inactive.
+2. Confirm the physical labels after the completed Starter transfer, then check disconnection/recovery behavior.
 3. Individual action mappings, then repeated sessions under ordinary workloads.
 4. Stop/exit, unplug/replug and sleep/wake behavior.
 5. Compare any new crash time against Windows logs. Avoid attributing a crash to this app or declaring it fixed without evidence.

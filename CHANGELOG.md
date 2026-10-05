@@ -11,4 +11,4 @@
 - LLM-editable JSON profiles for key labels/colors, hotkeys, app launches, URLs and dial/side actions.
 - Strict profile validation with last-valid-profile preservation and actions disabled initially.
 
-Physical input, display operation and mapped action delivery are not yet verified. This is an experimental preview, not a verified complete Studio replacement.
+The first physical-test log confirms keys 0–6 and 10–13, both dial directions on all three dials, and both side buttons. Profile transfer completed; correct physical images, the remaining inputs and mapped action delivery still need confirmation. This is an experimental preview, not a verified complete Studio replacement.
