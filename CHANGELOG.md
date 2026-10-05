@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Document the accepted C# host / Rust data-provider architecture, language-independent executable protocol draft, resource-measurement requirements and Rust/C# engineering standards.
+- Add contributor entry points to README, CONTRIBUTING and AGENTS, plus the repository-scoped `d200x-development` skill.
+- Include repository skills in source-ZIP exports. This does not add a provider loader, Rust implementation or live screen refresh, and does not change the installed preview.
+
 ## 0.1.0-preview.7
 
 - Simplify controls to Start/Stop, Update screens, Check device, Keep screen on and Enable actions. Status shows Ready/Active plus action and screen state, and follows the action toggle immediately.

@@ -18,6 +18,8 @@ The positions, labels, colors, mute shortcut and app/website actions use existin
 
 ## Modules still required
 
+The accepted direction is a C# host with Rust executable data providers and a language-independent protocol. See [architecture](architecture.md), [protocol draft](plugin-protocol.md) and [resource requirements](performance.md). The providers, loader and continuous widget refresh are not implemented; the source choices below remain integration work. Offline-source observations in this document are dated development context, not a diagnosis for every checkout.
+
 - **Exact artwork:** preview 5 supports built-in icons and local PNG images. An exact visual match still needs the original assets or user-selected replacements.
 - **Hardware display:** connect to the existing loopback sensor bridge and/or read the existing OHM CSV, preserving explicit sensor/hardware IDs, freshness checks and `--` for unavailable data. The bridge is currently offline and the newest CSV found is from yesterday. No new sensor driver has been installed.
 - **Usage:** use read-only Windows CPU/RAM APIs and an explicit GPU data source. Keep the integrated and discrete GPUs separate.

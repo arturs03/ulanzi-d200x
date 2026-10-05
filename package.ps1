@@ -72,7 +72,7 @@ $sourceStream = [IO.File]::Open($sourceArchive, [IO.FileMode]::Create)
 $sourceZip = New-Object IO.Compression.ZipArchive($sourceStream, [IO.Compression.ZipArchiveMode]::Create, $false)
 try {
     $rootFiles = Get-ChildItem -LiteralPath $PSScriptRoot -File | Where-Object { $_.Name -in @('.gitignore', '.gitattributes', 'LICENSE') -or $_.Extension -in @('.cs', '.csproj', '.ps1', '.md', '.cmd') }
-    $nestedFiles = foreach ($folder in @('Desktop', 'Installer', 'profiles', 'docs')) {
+    $nestedFiles = foreach ($folder in @('Desktop', 'Installer', 'profiles', 'docs', '.agents/skills')) {
         Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot $folder) -File -Recurse | Where-Object { $_.FullName -notmatch '[\\/](bin|obj)[\\/]' }
     }
     foreach ($file in @($rootFiles) + @($nestedFiles)) {

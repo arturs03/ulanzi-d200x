@@ -2,6 +2,22 @@
 
 This is an independent Windows app, CLI diagnostic tool and per-user installer for the Ulanzi D200X. Keep profiles editable by any LLM through the documented JSON format; changing a profile must not require recompilation or an LLM API account.
 
+## Contributor entry point and accepted direction
+
+Read [README.md](README.md), [CONTRIBUTING.md](CONTRIBUTING.md) and the relevant sections of [docs/engineering.md](docs/engineering.md). The repository skill is [.agents/skills/d200x-development/SKILL.md](.agents/skills/d200x-development/SKILL.md), invokable as `$d200x-development` in Codex from this repository.
+
+On 2026-10-05 the user accepted retaining the **C#/.NET host** and using **Rust for bundled data providers**, with a **language-independent executable protocol** and low resource use as a core requirement. This is accepted direction, not implemented functionality. Read [docs/architecture.md](docs/architecture.md), [docs/plugin-protocol.md](docs/plugin-protocol.md) and [docs/performance.md](docs/performance.md) for work on providers or live values. The protocol/limits are draft implementation choices; they are not a published compatibility contract.
+
+- Keep host UI, profiles, action execution and USB ownership in C#. Providers are optional, separately supervised read-only executables; community Go/other-language providers can implement the protocol.
+- Folder discovery, profile import/load and metadata selection must not launch providers. The initial design requires explicit session enablement. Provider failures become unavailable values independently of device control; no automatic restart storms.
+- Share collectors/caches across related widgets, bound all external input/work and render only changed display content. Measure total host/provider/external-collector overhead; do not call Rust inherently lightweight or promise zero resource/game impact.
+- Keep stale/invalid/ambiguous data unavailable and source/hardware/process selection explicit. Do not restamp cached readings, substitute hotspot sources or treat refresh rate as FPS.
+- Continuous device refresh and partial per-key writes remain unimplemented/unverified. Preserve explicit uploads until a bounded primitive is physically verified; do not repeatedly resend full ZIP pages.
+- Process separation is fault containment, not a sandbox. No implicit custom driver, elevation, service/startup/security setup or GPU telemetry polling follows from this architectural decision.
+- Preserve public/private data separation. No personal credentials, device paths, machine logs, user profiles or proprietary Studio assets in public source/releases.
+
+The workflow/context below records existing operational constraints and earlier milestones. For current physical status use [docs/hardware-validation.md](docs/hardware-validation.md); do not turn an earlier pending report into proof of failure or silently promote automated checks to hardware evidence.
+
 ## Stability requirement
 
 Preventing application failures, system crashes, black screens and BSODs is a core product requirement, explicitly reinforced on 2026-10-05. Favor stability over additional features. Never claim that user-space operation or passing automated checks guarantees that Windows, USB/GPU drivers or hardware cannot crash.

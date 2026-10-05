@@ -2,6 +2,8 @@
 
 An independent Windows app for controlling a **Ulanzi D200X** directly over USB, with profiles that ChatGPT or another LLM can edit. Includes a desktop interface, tray icon, per-user installer and documented JSON configuration. No Ulanzi Studio plugins, LLM API account or scripting engine are required.
 
+Contributors: start with [CONTRIBUTING.md](CONTRIBUTING.md), [architecture](docs/architecture.md) and [engineering standards](docs/engineering.md). AI coding agents should read [AGENTS.md](AGENTS.md); a reusable repository skill is included below.
+
 **Experimental preview:** device enumeration, all 14 LCD key inputs, all three dials turning, both side buttons and the numbered Starter page on the physical display are verified on a D200X. Automated checks pass. Dial presses 18/19, the key 13 overlay correction and keep-awake in a user session are also confirmed. Dial 17 press, mapped actions and long-term stability remain unverified. This is not yet a verified complete Studio replacement or a fix for PC crashes.
 
 ## Install
@@ -40,6 +42,24 @@ Give ChatGPT, Claude, another LLM or a coding assistant your profile plus [the s
 Supported mappings: hotkeys/media keys, local application launches, HTTP/HTTPS links, dial left/right/press and side buttons. Labels, key background colors and built-in/custom PNG icons are configurable. Actions do not run on profile load. Arbitrary scripts, shell commands and application arguments are not supported.
 
 [profiles/starter.json](profiles/starter.json) has inactive controls. [profiles/example.json](profiles/example.json) demonstrates a website, media playback, a Discord mute hotkey and a volume dial. Discord must have its matching keybind configured separately.
+
+## Established development direction
+
+Agreed on 2026-10-05: preserve the working **C#/.NET Windows UI and USB controller**, use **Rust for bundled data providers**, and define a **language-independent executable plugin protocol**. Low resource use, reliable stop behavior and honest unavailable/stale readings are product requirements. Community providers may use Go or another language that implements the protocol.
+
+| Area | Current implementation | Planned extension |
+| --- | --- | --- |
+| Host | C#/.NET 8, WinForms, CPU/GDI rendering, direct HID | Own plugin lifecycle, validation, widget rendering and device scheduling |
+| Actions | Compiled `IActionModule` registry and validated JSON profiles | Keep actions separate from read-only data providers |
+| Live values | Static `--` placeholders in the Studio draft | Rust providers for monitoring, markets and optional FPS |
+| Plugin installation | No runtime folder loader | Copy a provider folder, enable it explicitly, select values in the editor |
+| Display refresh | Explicit full-page upload; optional keep-screen-on packets | Opt-in bounded updates, after physical verification of the transport |
+
+**The provider loader, Rust providers and continuous widget refresh are not implemented yet.** The [plugin protocol](docs/plugin-protocol.md) is a design draft, not a supported API. Temperature/FPS acquisition still depends on an available data source; Rust does not remove external collector or driver costs. This architecture is for D200X Direct. Official Studio uses a separate SDK/package contract.
+
+Read [architecture](docs/architecture.md) for ownership and rollout, [plugin protocol](docs/plugin-protocol.md) for the proposed folder/IPC contract, [engineering standards](docs/engineering.md) for Rust/C# practices, and [performance requirements](docs/performance.md) for measurement and resource controls.
+
+The checked-in [d200x-development skill](.agents/skills/d200x-development/SKILL.md) routes AI contributors through these same documents. In Codex, invoke `$d200x-development` from this repository; repository skills live under `.agents/skills` ([official documentation](https://learn.chatgpt.com/docs/build-skills)). Other agents can read the skill as Markdown. No personal skill installation is required for a checkout.
 
 ## Build from source
 

@@ -2,6 +2,8 @@
 
 Preview 4 introduces a local C# module API. It is the foundation for expanding integrations; it is not an HTTP service or a loader for downloaded plugins. End users configure actions through the editor or validated JSON. Adding a new action implementation requires rebuilding the app.
 
+The accepted [architecture](architecture.md) adds a separate planned Rust executable-provider layer for live values. That [protocol](plugin-protocol.md) is still a draft. These providers do not implement IActionModule, execute mappings or own device writes; retain this compiled registry for existing actions.
+
 ## Current architecture
 
 ```text
