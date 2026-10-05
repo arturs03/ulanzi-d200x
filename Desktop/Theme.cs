@@ -104,11 +104,17 @@ internal sealed class DarkMenuColors : ProfessionalColorTable
 
 internal sealed class SurfacePanel : Panel
 {
-    public SurfacePanel() { DoubleBuffered = true; BackColor = Theme.Background; Padding = new Padding(18); }
+    public SurfacePanel()
+    {
+        SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw, true);
+        BackColor = Theme.Background; Padding = new Padding(18);
+    }
     protected override void OnPaint(PaintEventArgs e)
     {
+        e.Graphics.Clear(BackColor);
         base.OnPaint(e); e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-        using var shape = Theme.Round(new RectangleF(0.5f, 0.5f, Width - 1, Height - 1), 12);
+        if (Width < 2 || Height < 2) return;
+        using var shape = Theme.Round(new RectangleF(0.5f, 0.5f, Width - 1, Height - 1), Math.Min(12, (Math.Min(Width, Height) - 1) / 2f));
         using var fill = new SolidBrush(Theme.Surface); using var pen = new Pen(Theme.Border);
         e.Graphics.FillPath(fill, shape); e.Graphics.DrawPath(pen, shape);
     }

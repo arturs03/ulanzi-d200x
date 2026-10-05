@@ -6,7 +6,7 @@ An independent Windows app for controlling a **Ulanzi D200X** directly over USB,
 
 ## Install
 
-Download `D200X-Direct-0.1.0-preview.5-win-x64-Setup.exe` from the project's release artifacts and choose **Install / Update**. Close the app through its tray menu before updating; saved profiles are preserved. Open **D200X Direct** from the Windows Start menu. The executable bundles .NET, so end users do not need to install a runtime separately. Preview builds are not code signed.
+Download `D200X-Direct-0.1.0-preview.6-win-x64-Setup.exe` from the project's release artifacts and choose **Install / Update**. Close the app through its tray menu before updating; saved profiles are preserved. Open **D200X Direct** from the Windows Start menu. The executable bundles .NET, so end users do not need to install a runtime separately. Preview builds are not code signed.
 
 Target: Windows x64 supported by .NET 8, with a D200X connected by a data-capable USB cable. Only D200X is targeted; other Ulanzi models and Windows ARM64/x86 are not tested. No administrator access, driver replacement, service or automatic startup is installed.
 

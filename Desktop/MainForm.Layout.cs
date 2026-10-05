@@ -45,6 +45,8 @@ internal sealed partial class MainForm
         Text = "D200X Direct"; ClientSize = new Size(1180, 850); MinimumSize = new Size(940, 650);
         Font = new Font("Segoe UI", 10); BackColor = Theme.Background; ForeColor = Theme.Text;
         StartPosition = FormStartPosition.CenterScreen; DoubleBuffered = true;
+        SetStyle(ControlStyles.ResizeRedraw, true);
+        ResizeEnd += (_, _) => Invalidate(invalidateChildren: true);
         HandleCreated += (_, _) => Theme.DarkCaption(this);
         Shown += (_, _) =>
         {
@@ -89,7 +91,7 @@ internal sealed partial class MainForm
         };
         deckLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34)); deckLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 28));
         deckLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100)); deckLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 30)); deckLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 92));
-        deckLayout.Controls.Add(profileName, 0, 0); deckLayout.Controls.Add(Theme.Label("YOUR DECK   /   Select a control to edit its mapping", 9, Theme.Muted), 0, 1);
+        deckLayout.Controls.Add(profileName, 0, 0); deckLayout.Controls.Add(Theme.Label("APP PREVIEW   /   Stop, then Send to device to update its screens", 9, Theme.Muted), 0, 1);
         for (var i = 0; i < 5; i++) { grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20)); otherControls.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20)); }
         for (var i = 0; i < 3; i++) grid.RowStyles.Add(new RowStyle(SizeType.Percent, 100f / 3));
         for (var i = 0; i < 14; i++)

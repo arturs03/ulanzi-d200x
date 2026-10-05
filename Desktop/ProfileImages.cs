@@ -2,6 +2,7 @@ using System.Drawing.Imaging;
 using System.IO.Compression;
 using System.Text;
 using System.Text.Json;
+using System.Security.Cryptography;
 
 namespace D200xDirect.App;
 
@@ -46,8 +47,13 @@ internal static class ProfileImages
     public static byte[] Bundle(DeckProfile profile, string? profileDirectory = null)
     {
         var images = Enumerable.Range(0, 14).Select(i =>
-            (Key: profile.Keys.FirstOrDefault(k => k.Index == i) ?? new KeyConfig { Index = i }, Name: $"icons/key-{i}.png"))
-            .Select(item => (item.Key, item.Name, Bytes: Render(item.Key, profileDirectory))).ToArray();
+        {
+            var key = profile.Keys.FirstOrDefault(k => k.Index == i) ?? new KeyConfig { Index = i };
+            var bytes = Render(key, profileDirectory);
+            // The device can cache images by filename. Changed pixels must use a new name.
+            var digest = Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant()[..24];
+            return (Key: key, Name: $"icons/key-{i}-{digest}.png", Bytes: bytes);
+        }).ToArray();
         for (var padding = 0; padding < 256; padding++)
         {
             using var memory = new MemoryStream();

@@ -39,6 +39,28 @@ internal static class IconChecks
         withIcons.Keys[0].Icon = reference; withIcons.Keys[13].Icon = "builtin:usage";
         var bundle = ProfileImages.Bundle(withIcons, fixtureDirectory);
         if (!Protocol.CleanBoundaries(bundle)) throw new IOException("Icon page framing failed.");
+        var originalNames = ImageNames(bundle);
+        withIcons.Keys[0].Label = "Updated image";
+        var updatedNames = ImageNames(ProfileImages.Bundle(withIcons, fixtureDirectory));
+        if (originalNames["0_0"] == updatedNames["0_0"] || originalNames["1_0"] != updatedNames["1_0"])
+            throw new IOException("Device image names do not follow changed/unchanged pixels.");
+        if (updatedNames.Values.Any(name => !name.StartsWith("icons/key-", StringComparison.Ordinal) || !name.EndsWith(".png", StringComparison.Ordinal)))
+            throw new IOException("Invalid device image asset name.");
         File.WriteAllText(Path.Combine(fixtureDirectory, "profile.json"), System.Text.Json.JsonSerializer.Serialize(withIcons, Profiles.JsonOptions));
+    }
+
+    static Dictionary<string, string> ImageNames(byte[] bundle)
+    {
+        using var archive = new System.IO.Compression.ZipArchive(new MemoryStream(bundle));
+        using var manifest = archive.GetEntry("manifest.json")!.Open();
+        using var json = System.Text.Json.JsonDocument.Parse(manifest);
+        var names = new Dictionary<string, string>();
+        foreach (var cell in json.RootElement.EnumerateObject())
+        {
+            var name = cell.Value.GetProperty("ViewParam")[0].GetProperty("Icon").GetString()!;
+            if (archive.GetEntry(name) is null) throw new IOException("Manifest references a missing image.");
+            names.Add(cell.Name, name);
+        }
+        return names;
     }
 }

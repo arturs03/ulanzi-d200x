@@ -13,6 +13,7 @@ internal static class Program
             var starter = Path.Combine(AppContext.BaseDirectory, "profiles", "starter.json");
             File.Copy(starter, Path.Combine(fixtureDirectory, "profile.json"), true);
             IconChecks.Run(fixtureDirectory);
+            SurfaceChecks.Run();
             var profile = Profiles.Parse(File.ReadAllText(starter));
             var bundle = ProfileImages.Bundle(profile, fixtureDirectory);
             if (!Protocol.CleanBoundaries(bundle)) throw new IOException("Invalid profile display bundle.");
@@ -25,7 +26,7 @@ internal static class Program
                     using var png = entry.Open();
                     using var icon = Image.FromStream(png);
                     if (icon.Width != 196 || icon.Height != 196) throw new IOException("Invalid encoded icon dimensions.");
-                    if (entry.FullName == "icons/key-13.png")
+                    if (entry.FullName.StartsWith("icons/key-13-", StringComparison.Ordinal))
                     {
                         using var physical = new Bitmap(392, 196);
                         using var graphics = Graphics.FromImage(physical);

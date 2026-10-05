@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.0-preview.6
+
+- Redraw the full rounded-panel surface on resize and refresh exposed layout areas when resizing ends, addressing repeated border trails in the user's screenshot.
+- Clarify that the deck is an app preview: stop listening and explicitly Send to device to update the physical screens.
+- Give device PNG assets names derived from their pixels so a changed profile cannot reuse the Starter image filenames. A D200X reference implementation identifies firmware filename caching; this addresses a likely cause of the reported old page despite completed writes. Physical confirmation is still required.
+- Add hardware-free regression checks for full-surface invalidation when width/height grow or shrink, changed/unchanged image filenames and manifest-to-PNG references. Actions and packet framing are unchanged.
+
 ## 0.1.0-preview.5
 
 - Assign built-in icons or import local PNGs for LCD keys. Icons appear in the preview and in explicit device page uploads, including the wide Key 13. Missing/invalid custom icons fail page preparation before USB writes.
