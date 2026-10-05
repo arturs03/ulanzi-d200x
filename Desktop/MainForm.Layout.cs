@@ -5,19 +5,20 @@ namespace D200xDirect.App;
 
 internal sealed partial class MainForm
 {
-    readonly Label status = Theme.Label("Stopped", 11, Theme.Muted, true);
-    readonly Label sessionHint = Theme.Label("Start listening to run your controls and keep-awake updates.", 9, Theme.Muted);
+    readonly Label status = Theme.Label("Ready", 11, Theme.Muted, true);
+    readonly Label sessionHint = Theme.Label("Choose Start to use the controller. Actions are off.", 9, Theme.Muted);
+    readonly ToolTip helpTips = new() { ShowAlways = true, InitialDelay = 500, AutoPopDelay = 10000 };
     readonly Label profileName = Theme.Label("Starter", 16, bold: true);
     readonly TextBox log = new() { Multiline = true, ReadOnly = true, ScrollBars = ScrollBars.Vertical, Dock = DockStyle.Fill,
         BackColor = Theme.Surface, ForeColor = Theme.Muted, BorderStyle = BorderStyle.None, Font = new Font("Cascadia Mono", 9) };
     readonly TableLayoutPanel grid = new() { ColumnCount = 5, RowCount = 3, Dock = DockStyle.Fill, BackColor = Theme.Surface };
     readonly TableLayoutPanel otherControls = new() { ColumnCount = 5, RowCount = 1, Dock = DockStyle.Fill, BackColor = Theme.Surface };
-    readonly ModernButton start = new() { Text = "Start listening", Primary = true, Width = 144 };
-    readonly ModernButton stop = new() { Text = "Stop listening", Width = 144, Visible = false };
-    readonly ModernButton sendPage = new() { Text = "Send to device", Width = 144 };
-    readonly Toggle actions = new() { Text = "Run actions", Width = 150 };
-    readonly Toggle keepAwake = new() { Text = "Keep awake", Width = 150 };
-    readonly Label editorTitle = Theme.Label("Button 00", 17, bold: true);
+    readonly ModernButton start = new() { Text = "Start", Primary = true, Width = 112 };
+    readonly ModernButton stop = new() { Text = "Stop", Width = 112, Visible = false };
+    readonly ModernButton sendPage = new() { Text = "Update screens", Width = 144 };
+    readonly Toggle actions = new() { Text = "Enable actions", Width = 160 };
+    readonly Toggle keepAwake = new() { Text = "Keep screen on", Width = 168 };
+    readonly Label editorTitle = Theme.Label("Key 00", 17, bold: true);
     readonly TextBox labelInput = Theme.Input();
     readonly TextBox colorInput = Theme.Input();
     readonly ModernSelect presetInput = Theme.Select();
@@ -25,14 +26,14 @@ internal sealed partial class MainForm
     readonly Label iconCaption = Theme.Label("Icon", 9, Theme.Muted);
     readonly FlowLayoutPanel iconTools = new() { Width = 242, Height = 38, WrapContents = false, Margin = new Padding(0, 0, 0, 12), BackColor = Theme.Surface };
     readonly Label labelCaption = Theme.Label("Label", 9, Theme.Muted);
-    readonly Label colorCaption = Theme.Label("Display color", 9, Theme.Muted);
+    readonly Label colorCaption = Theme.Label("Background color", 9, Theme.Muted);
     readonly Label gestureCaption = Theme.Label("Trigger", 9, Theme.Muted);
     readonly ModernSelect gestureInput = Theme.Select();
     readonly ModernSelect actionInput = Theme.Select();
     readonly TextBox valueInput = Theme.Input();
     readonly Label valueCaption = Theme.Label("Shortcut", 9, Theme.Muted);
     readonly Label actionHelp = Theme.Label("", 9, Theme.Muted);
-    readonly Label editorFeedback = Theme.Label("Saved locally. Send to device to update labels.", 9, Theme.Muted);
+    readonly Label editorFeedback = Theme.Label("Save changes, then Update screens for labels and icons.", 9, Theme.Muted);
     readonly ModernButton browse = new() { Text = "Choose application…", Width = 242, Visible = false };
     readonly Dictionary<int, DeckTile> tiles = [];
     int selectedIndex;
@@ -73,7 +74,12 @@ internal sealed partial class MainForm
         var sessionPanel = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2, Padding = new Padding(0, 4, 0, 12) };
         sessionPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 42)); sessionPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         var bar = new FlowLayoutPanel { Dock = DockStyle.Fill, WrapContents = false, Margin = Padding.Empty };
-        bar.Controls.AddRange([start, stop, sendPage, Button("Inspect USB", Inspect, 116), keepAwake, actions]);
+        bar.Controls.AddRange([start, stop, sendPage, Button("Check device", Inspect, 116, "Check that Windows detects a compatible D200X. This does not start it or update its screens."), keepAwake, actions]);
+        helpTips.SetToolTip(start, "Start receiving buttons and dial input. Shortcuts run only when Enable actions is on.");
+        helpTips.SetToolTip(stop, "Stop the controller and screen keep-awake updates. The app stays open.");
+        helpTips.SetToolTip(sendPage, "Send saved labels and icons to the physical screens. Stop the controller before updating.");
+        helpTips.SetToolTip(keepAwake, "Keep this layout visible while the controller is active. Update screens first, then Start. Stop to change this experimental setting.");
+        helpTips.SetToolTip(actions, "Allow keys and dials to run saved shortcuts and open apps or websites. Off detects input only.");
         keepAwake.Margin = new Padding(16, 2, 0, 0); actions.Margin = new Padding(6, 2, 0, 0);
         sessionPanel.Controls.Add(bar, 0, 0);
         var state = new FlowLayoutPanel { Dock = DockStyle.Fill, WrapContents = false, Margin = Padding.Empty, Padding = new Padding(0, 7, 0, 0) };
@@ -91,7 +97,7 @@ internal sealed partial class MainForm
         };
         deckLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34)); deckLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 28));
         deckLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100)); deckLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 30)); deckLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 92));
-        deckLayout.Controls.Add(profileName, 0, 0); deckLayout.Controls.Add(Theme.Label("APP PREVIEW   /   Stop, then Send to device to update its screens", 9, Theme.Muted), 0, 1);
+        deckLayout.Controls.Add(profileName, 0, 0); deckLayout.Controls.Add(Theme.Label("SCREEN PREVIEW   /   Update screens applies saved labels and icons", 9, Theme.Muted), 0, 1);
         for (var i = 0; i < 5; i++) { grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20)); otherControls.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20)); }
         for (var i = 0; i < 3; i++) grid.RowStyles.Add(new RowStyle(SizeType.Percent, 100f / 3));
         for (var i = 0; i < 14; i++)
@@ -110,13 +116,13 @@ internal sealed partial class MainForm
         inspectorLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 48)); inspectorLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 48));
         inspectorLayout.Controls.Add(editorTitle, 0, 0);
         var fields = Stack(); fields.Dock = DockStyle.Fill; fields.AutoScroll = true; fields.BackColor = Theme.Surface;
-        AddField(fields, "Quick setup", presetInput);
-        presetInput.Items.Add("Choose a preset…"); foreach (var preset in ActionPresets.All) presetInput.Items.Add(preset);
+        AddField(fields, "Shortcut preset", presetInput);
+        presetInput.Items.Add("Choose a shortcut…"); foreach (var preset in ActionPresets.All) presetInput.Items.Add(preset);
         fields.Controls.Add(labelCaption); fields.Controls.Add(labelInput); labelInput.MaxLength = 64;
         fields.Controls.Add(colorCaption); fields.Controls.Add(colorInput); colorInput.MaxLength = 7;
         fields.Controls.Add(iconCaption);
         iconInput.Width = 138; iconInput.Margin = new Padding(0, 0, 8, 0);
-        var importIcon = Button("PNG…", ImportIcon, 94); iconTools.Controls.AddRange([iconInput, importIcon]); fields.Controls.Add(iconTools);
+        var importIcon = Button("Image…", ImportIcon, 94, "Choose a local PNG icon, up to 2 MB and 1024 pixels per side."); iconTools.Controls.AddRange([iconInput, importIcon]); fields.Controls.Add(iconTools);
         fields.Controls.Add(gestureCaption); fields.Controls.Add(gestureInput);
         AddField(fields, "Action", actionInput);
         actionInput.DisplayMember = nameof(ActionDescriptor.Title);
@@ -124,7 +130,7 @@ internal sealed partial class MainForm
         actionHelp.AutoSize = false; actionHelp.Size = new Size(242, 46); fields.Controls.Add(actionHelp);
         fields.Controls.Add(valueCaption); fields.Controls.Add(valueInput); fields.Controls.Add(browse);
         valueInput.Margin = new Padding(0, 0, 0, 12); browse.Margin = new Padding(0, 0, 0, 12);
-        var save = Button("Save mapping", SaveMapping, 242); save.Primary = true; save.Dock = DockStyle.Fill; save.Margin = new Padding(0, 2, 0, 8);
+        var save = Button("Save changes", SaveMapping, 242, "Save this control to your profile. Screen changes require Update screens; saving never runs the action."); save.Primary = true; save.Dock = DockStyle.Fill; save.Margin = new Padding(0, 2, 0, 8);
         editorFeedback.AutoSize = false; editorFeedback.Dock = DockStyle.Fill; editorFeedback.Margin = Padding.Empty;
         inspectorLayout.Controls.Add(fields, 0, 1); inspectorLayout.Controls.Add(save, 0, 2); inspectorLayout.Controls.Add(editorFeedback, 0, 3);
         inspector.Controls.Add(inspectorLayout); body.Controls.Add(inspector, 1, 0); root.Controls.Add(body, 0, 2);
@@ -134,9 +140,11 @@ internal sealed partial class MainForm
         activityLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 46)); activityLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         var tools = new FlowLayoutPanel { Dock = DockStyle.Fill, WrapContents = false, BackColor = Theme.Surface };
         var activityTitle = Theme.Label("Activity", 11, bold: true); activityTitle.Margin = new Padding(0, 8, 18, 0); tools.Controls.Add(activityTitle);
-        tools.Controls.AddRange([Button("Load profile…", LoadProfile, 124), Button("Edit JSON", () => OpenText(ProfilePath), 98), Button("Reload", ReloadProfile, 80),
-            Button("Profile folder", () => Process.Start(new ProcessStartInfo(profileDirectory) { UseShellExecute = true }), 112),
-            Button("LLM guide", () => OpenText(Path.Combine(AppContext.BaseDirectory, "docs", "customization.md")), 100)]);
+        tools.Controls.AddRange([Button("Import profile…", LoadProfile, 134, "Replace the current profile from a JSON file. Your previous profile is backed up and actions are turned off."),
+            Button("Edit profile", () => OpenText(ProfilePath), 108, "Open your profile JSON in Notepad. Save it, then choose Reload file."),
+            Button("Reload file", ReloadProfile, 100, "Apply edits from the saved profile JSON. Invalid edits keep the last valid profile."),
+            Button("Open folder", () => Process.Start(new ProcessStartInfo(profileDirectory) { UseShellExecute = true }), 100, "Open the folder containing your profile, backup and custom icons."),
+            Button("AI guide", () => OpenText(Path.Combine(AppContext.BaseDirectory, "docs", "customization.md")), 92, "Instructions for customizing your profile with ChatGPT or another AI assistant.")]);
         activityLayout.Controls.Add(tools, 0, 0); activityLayout.Controls.Add(log, 0, 1); activity.Controls.Add(activityLayout); root.Controls.Add(activity, 0, 3);
         Controls.Add(root);
         ResumeLayout(performLayout: false);
@@ -153,9 +161,10 @@ internal sealed partial class MainForm
 
     static FlowLayoutPanel Stack() => new() { FlowDirection = FlowDirection.TopDown, WrapContents = false, AutoSize = false, Dock = DockStyle.Fill, Margin = Padding.Empty };
     static void AddField(FlowLayoutPanel fields, string caption, Control input) { fields.Controls.Add(Theme.Label(caption, 9, Theme.Muted)); fields.Controls.Add(input); }
-    ModernButton Button(string text, Action action, int width)
+    ModernButton Button(string text, Action action, int width, string? help = null)
     {
         var button = new ModernButton { Text = text, Width = width };
+        if (help is not null) helpTips.SetToolTip(button, help);
         button.Click += (_, _) => { try { action(); } catch (Exception error) { Log(error.Message); } };
         return button;
     }
@@ -208,7 +217,7 @@ internal sealed partial class MainForm
             selectedIndex = index;
             presetInput.SelectedIndex = 0;
             foreach (var tile in tiles.Values) { tile.Selected = tile.Index == index; tile.Invalidate(); }
-            editorTitle.Text = index <= 13 ? $"Button {index:D2}" : index >= 17 ? $"Dial {index - 16}" : $"Side button {index - 14}";
+            editorTitle.Text = index <= 13 ? $"Key {index:D2}" : index >= 17 ? $"Dial {index - 16}" : $"Side button {index - 14}";
             labelInput.Enabled = index is not (15 or 16); colorInput.Enabled = index <= 13;
             labelInput.Visible = labelCaption.Visible = index is not (15 or 16);
             colorInput.Visible = colorCaption.Visible = index <= 13;
@@ -220,7 +229,7 @@ internal sealed partial class MainForm
             gestureInput.Items.Clear();
             gestureInput.Items.AddRange(index >= 17 ? ["Turn left", "Turn right", "Press"] : ["Press"]);
             gestureInput.SelectedIndex = 0; gestureInput.Enabled = index >= 17;
-            editorFeedback.Text = "Save your mapping here, or edit the JSON with your LLM."; editorFeedback.ForeColor = Theme.Muted;
+            editorFeedback.Text = "Edit this control, then Save changes."; editorFeedback.ForeColor = Theme.Muted;
             LoadEditorAction();
         }
         finally { loadingEditor = false; }
@@ -280,10 +289,10 @@ internal sealed partial class MainForm
             }
             finally { if (File.Exists(temporary)) File.Delete(temporary); }
             Volatile.Write(ref profile, candidate); RefreshDeck();
-            editorFeedback.ForeColor = Theme.Success; editorFeedback.Text = "Saved. Send to device to update labels. Enable Run actions to use the mapping.";
-            Log($"Saved {descriptor.Title} for control {selectedIndex}, {Gesture}. Device display unchanged.");
+            editorFeedback.ForeColor = Theme.Success; editorFeedback.Text = "Saved. Update screens applies labels and icons.";
+            Log($"Saved {descriptor.Title} for control {selectedIndex}, {Gesture}. Screen changes need Update screens.");
         }
-        catch (Exception error) { editorFeedback.ForeColor = Color.FromArgb(255, 159, 159); editorFeedback.Text = error.Message; Log($"Mapping rejected: {error.Message}"); }
+        catch (Exception error) { editorFeedback.ForeColor = Color.FromArgb(255, 159, 159); editorFeedback.Text = error.Message; Log($"Changes not saved: {error.Message}"); }
     }
 
     void SelectIcon(string? reference)
@@ -299,13 +308,13 @@ internal sealed partial class MainForm
         using var picker = new OpenFileDialog { Filter = "PNG icons (*.png)|*.png", CheckFileExists = true, Title = "Choose an icon (up to 2 MB, 1024 × 1024)" };
         if (picker.ShowDialog(this) != DialogResult.OK) return;
         var reference = IconStore.Import(picker.FileName, profileDirectory); SelectIcon(reference);
-        editorFeedback.ForeColor = Theme.Muted; editorFeedback.Text = "Icon imported. Save mapping, then Send to device.";
+        editorFeedback.ForeColor = Theme.Muted; editorFeedback.Text = "Image selected. Save changes, then Update screens.";
     }
 
     void LoadProfile()
     {
         using var picker = new OpenFileDialog { Filter = "D200X profiles (*.json)|*.json", CheckFileExists = true,
-            InitialDirectory = Path.Combine(AppContext.BaseDirectory, "profiles"), Title = "Load a profile" };
+            InitialDirectory = Path.Combine(AppContext.BaseDirectory, "profiles"), Title = "Import a profile" };
         if (picker.ShowDialog(this) == DialogResult.OK) ImportProfile(picker.FileName);
     }
 
@@ -331,8 +340,8 @@ internal sealed partial class MainForm
         }
         finally { if (File.Exists(temporary)) File.Delete(temporary); }
         actions.Checked = false; ReloadProfile();
-        editorFeedback.ForeColor = Theme.Success; editorFeedback.Text = "Profile loaded. Previous profile backed up. Stop and Send to device to update its page.";
-        Log("Profile imported; actions disabled. Display transfer remains explicit.");
+        editorFeedback.ForeColor = Theme.Success; editorFeedback.Text = "Imported. Stop, then Update screens.";
+        Log("Profile imported. Previous profile backed up; actions off. Choose Stop, then Update screens to apply its appearance.");
     }
 
     void ApplyPreset(ActionPreset preset)
@@ -344,7 +353,7 @@ internal sealed partial class MainForm
             ConfigureActionField(clear: false); valueInput.Text = string.Join(" + ", preset.Keys);
             if (labelInput.Enabled) labelInput.Text = preset.Label;
             if (selectedIndex <= 13) SelectIcon(preset.Icon);
-            editorFeedback.ForeColor = Theme.Muted; editorFeedback.Text = "Preset selected. Save mapping to keep it. Nothing has run.";
+            editorFeedback.ForeColor = Theme.Muted; editorFeedback.Text = "Shortcut selected. Save changes to keep it.";
         }
         finally { loadingEditor = false; }
     }

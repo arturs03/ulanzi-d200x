@@ -1,14 +1,14 @@
 # Customize D200X Direct with ChatGPT or another LLM
 
-The app stores your editable profile at `%APPDATA%\D200XDirect\profile.json`. Click **Edit JSON** to open it. An LLM can change this file; it does not need to change C# or rebuild the app. An LLM with access to your local files can edit it directly. In a normal chat, copy the generated JSON into the file yourself.
+The app stores your editable profile at `%APPDATA%\D200XDirect\profile.json`. Click **Edit profile** to open it. An LLM can change this file; it does not need to change C# or rebuild the app. An LLM with access to your local files can edit it directly. In a normal chat, copy the generated JSON into the file yourself.
 
-Click **Reload** after saving. Invalid profiles are rejected and the last valid mappings remain active. Reloading never changes the device display: stop listening, then click **Send to device** explicitly. Confirm the actual image on the D200X. Fully exit Studio before using the device from this app.
+Click **Reload file** after saving. Invalid profiles are rejected and the last valid mappings remain active. Reloading never changes the device display: stop listening, then click **Update screens** explicitly. Confirm the actual image on the D200X. Fully exit Studio before using the device from this app.
 
-The app starts stopped, with actions disabled. Click **Start listening** to log physical input. Only check **Run actions** when you want your mappings to execute. No app configures Discord keybinds for you; its corresponding hotkey must also be configured in Discord. Hotkeys use the current foreground application and may be rejected by elevated apps.
+The app starts stopped, with actions disabled. Click **Start** to log physical input. Only check **Enable actions** when you want your mappings to execute. No app configures Discord keybinds for you; its corresponding hotkey must also be configured in Discord. Hotkeys use the current foreground application and may be rejected by elevated apps.
 
-Keep device awake is a separate experimental app checkbox, not a JSON action. It defaults off. After sending a profile, select it before listening to send one small image-mode/time update every 5 seconds while the session runs. It is intended to test the reported one-minute idle fallback; the user confirmed that the device stays awake in a session; extended duration and possible flicker still need testing. Do not add unrecognized keep-awake fields to profiles.
+Keep screen on is a separate experimental app checkbox, not a JSON action. It defaults off. After sending a profile, select it before listening to send one small image-mode/time update every 5 seconds while the session runs. It is intended to test the reported one-minute idle fallback; the user confirmed that the device stays awake in a session; extended duration and possible flicker still need testing. Do not add unrecognized keep-awake fields to profiles.
 
-The dark app also lets you select any physical control and edit its mapping in the inspector. **Save mapping** writes the same validated profile, without executing it or uploading display images. Developers can extend the compiled action registry using [the module API](actions-api.md).
+The dark app also lets you select any physical control and edit its mapping in the inspector. **Save changes** writes the same validated profile, without executing it or uploading display images. Developers can extend the compiled action registry using [the module API](actions-api.md).
 
 ## Prompt to give an LLM
 
@@ -67,8 +67,8 @@ Profiles are plain text: avoid storing passwords, tokens or personal secrets in 
 
 ## Current limits
 
-The editor's **Quick setup** presets fill a label, icon and shortcut; **Save mapping** persists them. Screenshot region uses Win+Shift+S; recording region uses Win+Shift+R to open Snipping Tool, where you choose a region and start recording. Game Bar app recording uses Win+Alt+R as a separate preset. These are Windows shortcuts, not an embedded capture engine. They depend on the installed Windows tool and its settings. Actual shortcut delivery needs physical testing.
+The editor's **Shortcut preset** presets fill a label, icon and shortcut; **Save changes** persists them. Screenshot region uses Win+Shift+S; recording region uses Win+Shift+R to open Snipping Tool, where you choose a region and start recording. Game Bar app recording uses Win+Alt+R as a separate preset. These are Windows shortcuts, not an embedded capture engine. They depend on the installed Windows tool and its settings. Actual shortcut delivery needs physical testing.
 
-**Load profile** can import a local JSON file, copy validated custom PNGs into the profile's icons folder, and back up the previous profile as `profile.previous.json`. It disables Run actions and does not upload a page. Stop listening and explicitly Send to device to display the imported page. PNGs must be at most 2 MB and 1024 pixels per side; imports are normalized to at most 512 pixels.
+**Import profile** can import a local JSON file, copy validated custom PNGs into the profile's icons folder, and back up the previous profile as `profile.previous.json`. It disables Enable actions and does not upload a page. Stop and explicitly Update screens to display the imported page. PNGs must be at most 2 MB and 1024 pixels per side; imports are normalized to at most 512 pixels.
 
 This preview supports one active profile at a time, built-in/custom PNG key icons and profile import. Dynamic sensors, multiple device pages, automatic reconnect, custom dial-area images and automatic startup are not implemented. Physical actions, icon display and lifecycle still require validation on the D200X; automated checks alone do not establish device operation.

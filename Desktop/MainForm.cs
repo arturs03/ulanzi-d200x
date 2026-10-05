@@ -14,6 +14,8 @@ internal sealed partial class MainForm : Form
     int actionsEnabled;
     bool closing;
     bool pageSent;
+    bool controllerRunning;
+    bool sessionKeepsScreenOn;
     string ProfilePath => Path.Combine(profileDirectory, "profile.json");
 
     public MainForm(string? configurationDirectory = null)
@@ -21,17 +23,21 @@ internal sealed partial class MainForm : Form
         profileDirectory = configurationDirectory ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "D200XDirect");
         BuildLayout();
         var trayMenu = new ContextMenuStrip();
-        trayMenu.Items.Add("Show D200X Direct", null, (_, _) => ShowWindow());
-        trayMenu.Items.Add("Stop device control", null, (_, _) => session?.Cancel());
+        trayMenu.Items.Add("Open D200X Direct", null, (_, _) => ShowWindow());
+        trayMenu.Items.Add("Stop", null, (_, _) => session?.Cancel());
         trayMenu.Items.Add("Exit", null, (_, _) => Close());
         tray = new NotifyIcon { Icon = SystemIcons.Application, Text = "D200X Direct", ContextMenuStrip = trayMenu, Visible = true };
         tray.DoubleClick += (_, _) => ShowWindow();
         start.Click += async (_, _) => await StartSession();
         stop.Click += (_, _) => session?.Cancel();
         sendPage.Click += async (_, _) => await SendPage();
-        actions.CheckedChanged += (_, _) => Volatile.Write(ref actionsEnabled, actions.Checked ? 1 : 0);
+        actions.CheckedChanged += (_, _) =>
+        {
+            Volatile.Write(ref actionsEnabled, actions.Checked ? 1 : 0);
+            if (controllerRunning) UpdateActiveStatus();
+        };
         FormClosing += OnClosing;
-        FormClosed += (_, _) => { tray.Dispose(); session?.Dispose(); };
+        FormClosed += (_, _) => { tray.Dispose(); helpTips.Dispose(); session?.Dispose(); };
         Directory.CreateDirectory(profileDirectory);
         if (!File.Exists(ProfilePath))
         {
@@ -40,7 +46,7 @@ internal sealed partial class MainForm : Form
             else File.WriteAllText(ProfilePath, JsonSerializer.Serialize(new DeckProfile(), Profiles.JsonOptions));
         }
         ReloadProfile();
-        Log("Ready. Send your page, enable Keep awake, then Start listening. Actions are off until you enable them.");
+        Log("Ready. Update screens applies your layout. Choose Start to use the controller. Actions are off until you enable them.");
     }
 
     void ShowWindow() { Show(); WindowState = FormWindowState.Normal; Activate(); }
@@ -77,7 +83,7 @@ internal sealed partial class MainForm : Form
         if (processes.Items.Length > 0) throw new IOException("Fully exit Ulanzi Studio through its tray icon first.");
         return HidDevice.Enumerate().SingleOrDefault(d => d.InputLength == 1025 && d.OutputLength == 1025
             && d.InputReportIds.SequenceEqual(new[] { 0 }) && d.OutputReportIds.SequenceEqual(new[] { 0 }))
-            ?? throw new IOException("Expected exactly one D200X with compatible HID reports. Use Inspect USB first.");
+            ?? throw new IOException("Expected one compatible D200X. Choose Check device to see what Windows detects.");
     }
 
     void AcquireDevice()
@@ -92,6 +98,8 @@ internal sealed partial class MainForm : Form
     void ReleaseDevice() { deviceOwner?.ReleaseMutex(); deviceOwner?.Dispose(); deviceOwner = null; }
     void SetBusy(bool busy) { start.Visible = !busy; stop.Visible = busy; start.Enabled = sendPage.Enabled = keepAwake.Enabled = !busy; stop.Enabled = busy; }
 
+    void UpdateActiveStatus() => SetStatus("Active", $"Actions {(actions.Checked ? "on" : "off")} · {(sessionKeepsScreenOn ? "Keeping screen on" : "Screen may return to default")}", true);
+
     async Task StartSession()
     {
         if (sessionTask is not null) return;
@@ -100,11 +108,11 @@ internal sealed partial class MainForm : Form
             AcquireDevice();
             var device = SelectDevice();
             var sendKeepAwake = keepAwake.Checked;
-            if (sendKeepAwake && !pageSent) throw new IOException("Send your profile to the device first, then start with Keep device awake selected.");
+            if (sendKeepAwake && !pageSent) throw new IOException("Choose Update screens first, then Start with Keep screen on enabled.");
             session = new CancellationTokenSource();
             var token = session.Token;
             SetBusy(true);
-            SetStatus("Listening", sendKeepAwake ? "Keep-awake running · Keep the app open or hide it to the tray." : "Keep-awake is off · The device may return to its default screen.", true);
+            controllerRunning = true; sessionKeepsScreenOn = sendKeepAwake; UpdateActiveStatus();
             sessionTask = Task.Run(async () =>
             {
                 using var stream = HidDevice.Open(device, false);
@@ -135,7 +143,7 @@ internal sealed partial class MainForm : Form
                 if (writer is null) await ReadInput(token);
                 else
                 {
-                    Log("Keep-awake active: one small display/time command every 5 seconds; no repeated page uploads.");
+                    Log("Keep screen on active. Leave the app open or hide it to the tray. Screen updates run every 5 seconds.");
                     var count = 0;
                     await DeviceSession.RunPairAsync(ReadInput, ct => DeviceSession.KeepAwakeAsync(async writeToken =>
                     {
@@ -149,14 +157,15 @@ internal sealed partial class MainForm : Form
             await sessionTask;
         }
         catch (OperationCanceledException) when (session?.IsCancellationRequested == true) { }
-        catch (Exception error) { pageSent = false; Log($"Device session stopped: {error.Message}"); }
+        catch (Exception error) { pageSent = false; Log($"Controller stopped: {error.Message}"); }
         finally
         {
             sessionTask = null;
+            controllerRunning = false;
             session?.Dispose(); session = null;
             ReleaseDevice();
             SetBusy(false);
-            SetStatus("Stopped", "Start listening to run your controls and keep-awake updates.");
+            SetStatus("Ready", "Choose Start to use the controller. Enable actions allows shortcuts to run.");
         }
     }
 
@@ -170,7 +179,7 @@ internal sealed partial class MainForm : Form
             var snapshot = Volatile.Read(ref profile);
             Profiles.Validate(snapshot);
             SetBusy(true);
-            SetStatus("Sending page", "Updating the physical display…");
+            SetStatus("Updating", "Sending saved labels and icons to the device…");
             session = new CancellationTokenSource(TimeSpan.FromSeconds(30));
             var token = session.Token;
             sessionTask = Task.Run(async () =>
@@ -181,17 +190,17 @@ internal sealed partial class MainForm : Form
                 foreach (var packet in Protocol.DisplayPackets(bundle))
                     await stream.WriteAsync(Protocol.WindowsReport(packet), token);
                 await stream.FlushAsync(token);
-                Log($"Sent {snapshot.Name} ({bundle.Length} bytes); wide screen set to image mode. Confirm the physical display; reopening Studio is expected to restore its page.");
+                Log($"Screen data sent: {snapshot.Name} ({bundle.Length} bytes). Check the physical screens to confirm it applied.");
             }, token);
             await sessionTask;
             pageSent = true;
         }
-        catch (Exception error) { pageSent = false; Log($"Display transfer stopped: {error.Message}"); }
+        catch (Exception error) { pageSent = false; Log($"Screen update stopped: {error.Message}"); }
         finally
         {
             sessionTask = null;
             session?.Dispose(); session = null;
-            ReleaseDevice(); SetBusy(false); SetStatus("Stopped", pageSent ? "Page sent · Enable Keep awake, then Start listening." : "Page not sent · See activity for details.");
+            ReleaseDevice(); SetBusy(false); SetStatus("Ready", pageSent ? "Check the device screens. Enable Keep screen on, then Start." : "Screen update failed. See Activity for details.");
         }
     }
 

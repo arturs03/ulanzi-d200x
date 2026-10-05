@@ -11,6 +11,7 @@ internal static class Program
     const string Product = "D200XDirect";
     const string MarkerName = "installation.json";
     const string UninstallKey = @"Software\Microsoft\Windows\CurrentVersion\Uninstall\D200XDirect";
+    static string Version => Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>()!.InformationalVersion.Split('+')[0];
     static string Root => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), Product);
     static string AppDirectory => Path.Combine(Root, "App");
     static string Shortcut => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.StartMenu), "Programs", "D200X Direct.lnk");
@@ -117,7 +118,7 @@ internal static class Program
         // Verify shortcut ownership before changing an existing shortcut.
         if (File.Exists(Shortcut) && !ShortcutTargetsApp()) throw new IOException("A different Start menu shortcut already uses this name.");
         Directory.CreateDirectory(AppDirectory);
-        File.WriteAllText(Path.Combine(Root, MarkerName), JsonSerializer.Serialize(new { product = Product, version = "0.1.0-preview.3" }));
+        File.WriteAllText(Path.Combine(Root, MarkerName), JsonSerializer.Serialize(new { product = Product, version = Version }));
         using (var payload = OpenPayload())
             foreach (var entry in payload.Entries)
             {
@@ -138,7 +139,7 @@ internal static class Program
         link.Save();
         using var key = Registry.CurrentUser.CreateSubKey(UninstallKey);
         key.SetValue("DisplayName", "D200X Direct (Preview)");
-        key.SetValue("DisplayVersion", "0.1.0-preview.3");
+        key.SetValue("DisplayVersion", Version);
         key.SetValue("Publisher", "D200X Direct contributors");
         key.SetValue("InstallLocation", Root);
         key.SetValue("UninstallString", $"\"{installedSetup}\" --uninstall");

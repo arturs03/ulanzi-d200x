@@ -1,6 +1,6 @@
 # Recreating the previous Studio page
 
-The source includes `profiles/studio-layout.json`, a validated layout draft compatible with preview 5. Load it with Load profile, then stop and explicitly Send to device. It does not replace the installed profile or write to the device automatically. A separate private copy can contain a locally verified application path; public templates contain no personal paths.
+The source includes `profiles/studio-layout.json`, a validated layout draft compatible with preview 5. Load it with Import profile, then stop and explicitly Update screens. It does not replace the installed profile or write to the device automatically. A separate private copy can contain a locally verified application path; public templates contain no personal paths.
 
 | Row | Column 1 | Column 2 | Column 3 | Column 4 | Column 5 |
 | --- | --- | --- | --- | --- | --- |

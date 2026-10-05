@@ -6,7 +6,7 @@ An independent Windows app for controlling a **Ulanzi D200X** directly over USB,
 
 ## Install
 
-Download `D200X-Direct-0.1.0-preview.6-win-x64-Setup.exe` from the project's release artifacts and choose **Install / Update**. Close the app through its tray menu before updating; saved profiles are preserved. Open **D200X Direct** from the Windows Start menu. The executable bundles .NET, so end users do not need to install a runtime separately. Preview builds are not code signed.
+Download `D200X-Direct-0.1.0-preview.7-win-x64-Setup.exe` from the project's release artifacts and choose **Install / Update**. Close the app through its tray menu before updating; saved profiles are preserved. Open **D200X Direct** from the Windows Start menu. The executable bundles .NET, so end users do not need to install a runtime separately. Preview builds are not code signed.
 
 Target: Windows x64 supported by .NET 8, with a D200X connected by a data-capable USB cable. Only D200X is targeted; other Ulanzi models and Windows ARM64/x86 are not tested. No administrator access, driver replacement, service or automatic startup is installed.
 
@@ -15,17 +15,17 @@ Installation: `%LOCALAPPDATA%\D200XDirect`. Profile: `%APPDATA%\D200XDirect\prof
 ## First use
 
 1. Finish any benchmark or comparison that needs Studio. Fully exit Ulanzi Studio through its tray icon before starting direct device control. Do not run both controllers at once.
-2. Open the app. It starts stopped, with configured actions disabled. **Inspect USB** only reads capabilities.
-3. Click **Start listening** and press buttons, rotate and press the dials. Confirm decoded input appears. **Stop listening** releases the device; zero events does not establish successful input.
-4. Use **Edit JSON**, save your changes, then **Reload**. Invalid profiles are rejected; the last valid mappings remain active.
-5. While stopped, click **Send to device** to send the key labels/colors. Confirm the actual physical screen. This changes the displayed page without editing Studio's saved profiles; reopening Studio is expected to restore its page, but that recovery still needs confirmation.
-6. Start listening and check **Run actions** to execute mappings from physical controls. The tray menu can stop control or exit.
+2. Open the app. It starts stopped, with configured actions disabled. **Check device** only reads capabilities.
+3. Click **Start** and press buttons, rotate and press the dials. Confirm decoded input appears. **Stop** releases the device; zero events does not establish successful input.
+4. Use **Edit profile**, save your changes, then **Reload file**. Invalid profiles are rejected; the last valid mappings remain active.
+5. While stopped, click **Update screens** to send the key labels/colors. Confirm the actual physical screen. This changes the displayed page without editing Studio's saved profiles; reopening Studio is expected to restore its page, but that recovery still needs confirmation.
+6. Start and check **Enable actions** to execute mappings from physical controls. The tray menu can stop control or exit.
 
-If the device returns to its stock screen after about one minute, send the profile first, select **Keep awake** while stopped, then **Start listening**. This opt-in setting sends one small image-mode/time packet every five seconds; it does not repeatedly upload images, poll sensors or run actions. Stop/exit or an I/O error ends the updates. The setting defaults off and cannot be changed during a session. The user confirmed that the device stays awake in a session with this enabled. Exact extended duration and possible blinking still need testing; listening alone does not send these updates.
+If the device returns to its stock screen after about one minute, send the profile first, select **Keep screen on** while stopped, then **Start**. This opt-in setting sends one small image-mode/time packet every five seconds; it does not repeatedly upload images, poll sensors or run actions. Stop/exit or an I/O error ends the updates. The setting defaults off and cannot be changed during a session. The user confirmed that the device stays awake in a session with this enabled. Exact extended duration and possible blinking still need testing; listening alone does not send these updates.
 
 ## Edit controls in the app
 
-The dark desktop interface has a clickable deck and an action inspector. Select a key, dial or side button, edit its mapping, then choose **Save mapping**. Quick setup fills common screenshot, recording, mute and audio mappings. Choose a built-in icon or use PNG… to import an image for an LCD key. Load profile imports a local profile, copies its custom PNGs and backs up your previous profile; actions stay disabled until enabled. For a dial, choose Turn left, Turn right or Press before editing. Key labels/colors/icons update on the physical display only when you explicitly **Send to device** while stopped. Changes are saved to the same JSON profile used by LLM customization; invalid edits leave the saved profile intact. The app's **Run actions** toggle controls execution.
+The dark desktop interface has a clickable deck and an action inspector. Select a key, dial or side button, edit its mapping, then choose **Save changes**. Shortcut preset fills common screenshot, recording, mute and audio mappings. Choose a built-in icon or use Image… to import an image for an LCD key. Import profile imports a local profile, copies its custom PNGs and backs up your previous profile; actions stay disabled until enabled. For a dial, choose Turn left, Turn right or Press before editing. Key labels/colors/icons update on the physical display only when you explicitly **Update screens** while stopped. Changes are saved to the same JSON profile used by LLM customization; invalid edits leave the saved profile intact. The app's **Enable actions** toggle controls execution.
 
 The shared [action module API](docs/actions-api.md) provides descriptors, validation and handlers for existing actions, with documented extension points for future integrations. It does not run arbitrary downloaded modules or expose a network server.
 

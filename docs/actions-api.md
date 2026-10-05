@@ -6,7 +6,7 @@ Preview 4 introduces a local C# module API. It is the foundation for expanding i
 
 ```text
 Physical key / dial / side event
-    → press deduplication and Run actions gate
+    → press deduplication and Enable actions gate
     → Profiles.ActionFor(profile, event)
     → ActionCatalog: validate, resolve registered action
     → IActionModule.ExecuteAsync(action, context, cancellation)
@@ -37,7 +37,7 @@ await ActionCatalog.Default.ExecuteAsync(
     action, new ActionContext(input, platform), cancellationToken);
 ```
 
-The catalog validates again at execution and rejects pre-cancelled calls before host access. The desktop starts with Run actions off. Profile loading, editing, saving and page uploads never execute mappings. Hotkeys target Windows/current foreground context; application-specific keybinds must match separately.
+The catalog validates again at execution and rejects pre-cancelled calls before host access. The desktop starts with Enable actions off. Profile loading, editing, saving and page uploads never execute mappings. Hotkeys target Windows/current foreground context; application-specific keybinds must match separately.
 
 ## Current useful controls
 
@@ -57,7 +57,7 @@ LCD-key icons are separate display metadata: `KeyConfig.Icon` accepts a supporte
 ## Adding an integration
 
 1. Define a stable action ID and explicit configuration, permissions, side effects and error behavior. Keep secrets outside profiles; document only a secure reference. Do not use arbitrary command strings as an integration API.
-2. Implement an IActionModule and register it explicitly. Extend the host adapter only with the specific capabilities it needs. Update the schema, editor input handling and LLM guide together if new fields or input kinds are needed. The current DeckAction fields are intentionally limited; registration alone does not add arbitrary JSON parameters.
+2. Implement an IActionModule and register it explicitly. Extend the host adapter only with the specific capabilities it needs. Update the schema, editor input handling and AI guide together if new fields or input kinds are needed. The current DeckAction fields are intentionally limited; registration alone does not add arbitrary JSON parameters.
 3. Test validation, cancellation, error handling and no side effects before execution using injected fakes. Confirm older profiles still load. Test actual physical action delivery separately.
 4. Keep handlers short and nonblocking. The current native actions run directly in the input loop. A slow/network integration needs a bounded worker queue, operation deadlines and stop behavior before it is enabled; do not put unbounded I/O in a handler.
 

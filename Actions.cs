@@ -61,10 +61,10 @@ static class BuiltInActions
 {
     public static IEnumerable<IActionModule> Create() =>
     [
-        new Module(new("none", "Unassigned", "This control has no action.", ActionValueKind.None)),
-        new Module(new("hotkey", "Keyboard shortcut", "A shortcut, media key or volume key. Sent to Windows.", ActionValueKind.Shortcut)),
-        new Module(new("open-url", "Open website", "Open an HTTP or HTTPS link in your default browser.", ActionValueKind.Url)),
-        new Module(new("launch", "Launch application", "Open a local .exe application, without arguments.", ActionValueKind.Application))
+        new Module(new("none", "No action", "This control does nothing when pressed.", ActionValueKind.None)),
+        new Module(new("hotkey", "Keyboard shortcut", "Press a shortcut, media key or volume key on your PC.", ActionValueKind.Shortcut)),
+        new Module(new("open-url", "Open website", "Open this link in your default browser.", ActionValueKind.Url)),
+        new Module(new("launch", "Open app", "Open an installed Windows application.", ActionValueKind.Application))
     ];
 
     sealed class Module(ActionDescriptor descriptor) : IActionModule

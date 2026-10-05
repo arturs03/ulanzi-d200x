@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.0-preview.7
+
+- Simplify controls to Start/Stop, Update screens, Check device, Keep screen on and Enable actions. Status shows Ready/Active plus action and screen state, and follows the action toggle immediately.
+- Clarify editor, profile-import and file-editing labels; add hover help explaining each control's effect. Saving remains distinct from screen updates and running actions.
+- Report screen writes as data sent that needs physical confirmation. Windows Apps metadata now uses the actual release version instead of an old hardcoded preview number.
+- Preserve stopped/actions-off defaults, explicit uploads, transport limits and all profile/action contracts.
+
 ## 0.1.0-preview.6
 
 - Redraw the full rounded-panel surface on resize and refresh exposed layout areas when resizing ends, addressing repeated border trails in the user's screenshot.
