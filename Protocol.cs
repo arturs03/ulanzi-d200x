@@ -89,6 +89,21 @@ public static class Protocol
         }
     }
 
+    public static IEnumerable<byte[]> DisplayPackets(byte[] bundle)
+    {
+        // Validate the whole transfer before even changing the wide-screen mode.
+        if (bundle.Length == 0 || !CleanBoundaries(bundle)) throw new ArgumentException("Invalid bundle boundaries.");
+        // Key 13 has a separate firmware renderer. Mode 2 displays our icon instead of
+        // the retained CPU/RAM/GPU gauges or clock. Other fields are unused placeholders,
+        // not measured sensor values. No telemetry polling or periodic mode refresh occurs.
+        var imageMode = Packet(0x0006, Encoding.ASCII.GetBytes("2|0|0|00:00:00|0"));
+        yield return imageMode;
+        foreach (var packet in BundlePackets(bundle)) yield return packet;
+        // Restate once after the page because firmware can retain/reset its wide renderer.
+        // This is a bounded display command, never an automatic retry loop.
+        yield return imageMode;
+    }
+
     static void Write(ZipArchive zip, string name, byte[] data, CompressionLevel compression)
     {
         var entry = zip.CreateEntry(name, compression);

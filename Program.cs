@@ -60,7 +60,7 @@ try
     if (command == "test-page")
     {
         var bundle = Protocol.TestBundle();
-        foreach (var packet in Protocol.BundlePackets(bundle))
+        foreach (var packet in Protocol.DisplayPackets(bundle))
             await stream.WriteAsync(Protocol.WindowsReport(packet), timeout.Token);
         await stream.FlushAsync(timeout.Token);
         Console.WriteLine($"Sent a temporary TEST 00–13 page ({bundle.Length} bytes). Studio profiles were not edited. Reopen Studio to restore its page.");

@@ -100,13 +100,15 @@ internal sealed class MainForm : Form
             for (var i = 0; i < 14; i++)
             {
                 var key = candidate.Keys.FirstOrDefault(k => k.Index == i) ?? new KeyConfig { Index = i };
-                grid.Controls.Add(new Label
+                var card = new Label
                 {
                     Text = $"{i:D2}  {(key.Label.Length > 18 ? key.Label[..18] + "…" : key.Label)}\n{key.Action.Type}", Dock = DockStyle.Fill,
                     AutoEllipsis = true,
                     TextAlign = ContentAlignment.MiddleCenter, BackColor = ColorTranslator.FromHtml(key.Background),
                     ForeColor = Color.White, Margin = new Padding(5), Font = keyFont
-                }, i % 5, i / 5);
+                };
+                grid.Controls.Add(card, i % 5, i / 5);
+                if (i == 13) grid.SetColumnSpan(card, 2);
             }
             Log($"Loaded profile: {candidate.Name}. Dials: {candidate.Dials.Count}; side buttons: {candidate.SideButtons.Count}. Device display is updated separately.");
         }
@@ -211,10 +213,10 @@ internal sealed class MainForm : Form
                 // Build and validate the entire bundle before opening the writable device.
                 var bundle = ProfileImages.Bundle(snapshot);
                 using var stream = HidDevice.Open(device, true);
-                foreach (var packet in Protocol.BundlePackets(bundle))
+                foreach (var packet in Protocol.DisplayPackets(bundle))
                     await stream.WriteAsync(Protocol.WindowsReport(packet), token);
                 await stream.FlushAsync(token);
-                Log($"Sent {snapshot.Name} ({bundle.Length} bytes). Confirm the physical display; reopening Studio is expected to restore its page.");
+                Log($"Sent {snapshot.Name} ({bundle.Length} bytes); wide screen set to image mode. Confirm the physical display; reopening Studio is expected to restore its page.");
             }, token);
             await sessionTask;
         }

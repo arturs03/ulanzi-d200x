@@ -36,6 +36,15 @@ public static class SelfTests
         Check(BinaryPrimitives.ReadUInt32LittleEndian(pieces[0].AsSpan(4)) == bundle.Length, "bundle transfer length");
         var rebuilt = pieces[0].Skip(8).Concat(pieces.Skip(1).SelectMany(x => x)).Take(bundle.Length).ToArray();
         Check(rebuilt.SequenceEqual(bundle), "multi-packet ZIP reconstruction");
+        var display = Protocol.DisplayPackets(bundle).ToArray();
+        Check(display.Length == pieces.Length + 2, "bounded wide-mode commands around page");
+        Check(BinaryPrimitives.ReadUInt16BigEndian(display[0].AsSpan(2)) == 0x0006
+            && Encoding.ASCII.GetString(display[0], 8, (int)BinaryPrimitives.ReadUInt32LittleEndian(display[0].AsSpan(4))) == "2|0|0|00:00:00|0",
+            "wide screen selects image mode, not gauges");
+        Check(display[^1].SequenceEqual(display[0]), "wide mode restored after bundle");
+        Check(display.Skip(1).Take(pieces.Length).Zip(pieces).All(pair => pair.First.SequenceEqual(pair.Second)), "display mode does not corrupt ZIP packets");
+        try { Protocol.DisplayPackets(new byte[3000]).First(); throw new Exception("Malformed display emitted a mode command."); }
+        catch (ArgumentException) { checks++; }
         using var archive = new ZipArchive(new MemoryStream(rebuilt));
         Check(archive.GetEntry("manifest.json") != null && archive.Entries.Count(x => x.FullName.EndsWith(".png")) == 14, "complete diagnostic page");
         var png = TestIcon.Render(3);

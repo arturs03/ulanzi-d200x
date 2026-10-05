@@ -6,7 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AssemblyName>D200xDirect</AssemblyName>
-    <Version>0.1.0-preview.1</Version>
+    <Version>0.1.0-preview.2</Version>
     <Product>D200X Direct</Product>
     <Deterministic>true</Deterministic>
   </PropertyGroup>

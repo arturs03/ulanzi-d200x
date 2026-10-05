@@ -9,16 +9,27 @@ internal static class ProfileImages
 {
     public static byte[] Render(KeyConfig key)
     {
-        using var bitmap = new Bitmap(196, 196);
+        // The firmware stretches key 13's 196x196 PNG across its 392x196 screen.
+        // Compose at the physical aspect ratio, then squeeze only the encoded image.
+        var width = key.Index == 13 ? 392 : 196;
+        using var bitmap = new Bitmap(width, 196);
         using var graphics = Graphics.FromImage(bitmap);
         graphics.Clear(ColorTranslator.FromHtml(key.Background));
         using var font = new Font("Segoe UI", 22, FontStyle.Bold, GraphicsUnit.Pixel);
         using var format = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center, Trimming = StringTrimming.EllipsisWord };
-        graphics.DrawString(key.Label, font, Brushes.White, new RectangleF(10, 10, 176, 150), format);
+        graphics.DrawString(key.Label, font, Brushes.White, new RectangleF(10, 10, width - 20, 150), format);
         using var numberFont = new Font("Segoe UI", 12, FontStyle.Regular, GraphicsUnit.Pixel);
-        graphics.DrawString(key.Index.ToString("D2"), numberFont, Brushes.LightGray, new RectangleF(10, 164, 176, 22), format);
+        graphics.DrawString(key.Index.ToString("D2"), numberFont, Brushes.LightGray, new RectangleF(10, 164, width - 20, 22), format);
         using var output = new MemoryStream();
-        bitmap.Save(output, ImageFormat.Png);
+        if (width == 196) bitmap.Save(output, ImageFormat.Png);
+        else
+        {
+            using var encoded = new Bitmap(196, 196);
+            using var scaled = Graphics.FromImage(encoded);
+            scaled.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+            scaled.DrawImage(bitmap, new Rectangle(0, 0, 196, 196), new Rectangle(0, 0, width, 196), GraphicsUnit.Pixel);
+            encoded.Save(output, ImageFormat.Png);
+        }
         return output.ToArray();
     }
 

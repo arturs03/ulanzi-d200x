@@ -6,7 +6,7 @@ An independent Windows app for controlling a **Ulanzi D200X** directly over USB,
 
 ## Install
 
-Download `D200X-Direct-0.1.0-preview.1-win-x64-Setup.exe` from the project's release artifacts and choose **Install / Update**. Open **D200X Direct** from the Windows Start menu. The executable bundles .NET, so end users do not need to install a runtime separately. Preview builds are not code signed.
+Download `D200X-Direct-0.1.0-preview.2-win-x64-Setup.exe` from the project's release artifacts and choose **Install / Update**. Close the app through its tray menu before updating; saved profiles are preserved. Open **D200X Direct** from the Windows Start menu. The executable bundles .NET, so end users do not need to install a runtime separately. Preview builds are not code signed.
 
 Target: Windows x64 supported by .NET 8, with a D200X connected by a data-capable USB cable. Only D200X is targeted; other Ulanzi models and Windows ARM64/x86 are not tested. No administrator access, driver replacement, service or automatic startup is installed.
 
@@ -64,6 +64,7 @@ Stability is a core requirement: preventing application errors, black screens an
 - Input decoding, report framing, ZIP transfer boundaries/reassembly, PNG generation, JSON validation and action selection have automated checks.
 - Physical-test evidence: keys 0–6 and 10–13 have press/release events; dials 17–19 turn both ways; side buttons 15–16 have press/release events. Keys 7–9 and dial presses remain to be checked. See [hardware validation](docs/hardware-validation.md).
 - A Starter profile display transfer completed, and the user confirmed the correct physical numbered labels. Action delivery, reconnect behavior, sleep/wake and long-term reliability remain unverified.
+- Preview 1 left the built-in CPU/RAM/GPU gauges overlapping key 13. Preview 2 explicitly selects image mode during page transfer and formats key 13 as the double-width screen. Its physical correction still needs confirmation. These are ordinary display commands; no firmware flashing or sensor polling is added.
 - One active profile; no dynamic sensors, custom image files, multiple pages, custom dial-area display, automatic reconnect or automatic startup yet.
 - The app refuses active device access while the known Studio process runs and prevents concurrent sessions with its diagnostic CLI. Keep other third-party controllers closed too.
 - The desktop app uses standard Windows controls and CPU/GDI image generation. It does not poll AMD telemetry or initialize a browser/game rendering engine. This does not guarantee protection against GPU driver, USB, kernel or hardware failures.

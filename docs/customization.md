@@ -19,6 +19,7 @@ For example: “Make key 0 open my favorite website, label it Web with a blue ba
 - `schemaVersion`: 1.
 - `name`: a name with 1–80 characters.
 - `keys`: up to 14 entries, each with a unique `index` (0–13), `label`, `background` and `action`. Missing keys are blank and inactive.
+- Key 13 is the double-width screen. The app selects image mode when sending a page so its firmware clock/gauges do not overlap the configured label. Its image and app preview use the wide aspect ratio.
 - `dials`: up to three entries, each with a unique `index` (17–19), `label` and `left`, `right`, `press` actions. Dial labels are shown in the JSON; custom dial-area display is not implemented.
 - `sideButtons`: up to two entries, each with a unique `index` (15 or 16) and `action`.
 
