@@ -1,0 +1,183 @@
+{
+  "schemaVersion": 1,
+  "name": "Studio layout draft",
+  "keys": [
+    {
+      "index": 0,
+      "label": "ChatGPT",
+      "background": "#102038",
+      "action": {
+        "type": "open-url",
+        "url": "https://chatgpt.com/"
+      }
+    },
+    {
+      "index": 1,
+      "label": "Steam",
+      "background": "#102038",
+      "action": {
+        "type": "none"
+      }
+    },
+    {
+      "index": 2,
+      "label": "Mute",
+      "background": "#102038",
+      "action": {
+        "type": "hotkey",
+        "keys": [
+          "Ctrl",
+          "Alt",
+          "Shift",
+          "M"
+        ]
+      }
+    },
+    {
+      "index": 3,
+      "label": "",
+      "background": "#102038",
+      "action": {
+        "type": "none"
+      }
+    },
+    {
+      "index": 4,
+      "label": "",
+      "background": "#102038",
+      "action": {
+        "type": "none"
+      }
+    },
+    {
+      "index": 5,
+      "label": "NVDA --",
+      "background": "#102038",
+      "action": {
+        "type": "open-url",
+        "url": "https://finance.yahoo.com/quote/NVDA/"
+      }
+    },
+    {
+      "index": 6,
+      "label": "SOL-USD --",
+      "background": "#102038",
+      "action": {
+        "type": "open-url",
+        "url": "https://finance.yahoo.com/quote/SOL-USD/"
+      }
+    },
+    {
+      "index": 7,
+      "label": "AAPL --",
+      "background": "#102038",
+      "action": {
+        "type": "open-url",
+        "url": "https://finance.yahoo.com/quote/AAPL/"
+      }
+    },
+    {
+      "index": 8,
+      "label": "",
+      "background": "#102038",
+      "action": {
+        "type": "none"
+      }
+    },
+    {
+      "index": 9,
+      "label": "FPS --",
+      "background": "#102038",
+      "action": {
+        "type": "none"
+      }
+    },
+    {
+      "index": 10,
+      "label": "CPU -- °C",
+      "background": "#102038",
+      "action": {
+        "type": "none"
+      }
+    },
+    {
+      "index": 11,
+      "label": "GPU -- °C",
+      "background": "#102038",
+      "action": {
+        "type": "none"
+      }
+    },
+    {
+      "index": 12,
+      "label": "HOTSPOT -- °C",
+      "background": "#102038",
+      "action": {
+        "type": "none"
+      }
+    },
+    {
+      "index": 13,
+      "label": "CPU --% / RAM --% / GPU --%",
+      "background": "#102038",
+      "action": {
+        "type": "none"
+      }
+    }
+  ],
+  "dials": [
+    {
+      "index": 17,
+      "label": "Dial 1",
+      "left": {
+        "type": "none"
+      },
+      "right": {
+        "type": "none"
+      },
+      "press": {
+        "type": "none"
+      }
+    },
+    {
+      "index": 18,
+      "label": "Dial 2",
+      "left": {
+        "type": "none"
+      },
+      "right": {
+        "type": "none"
+      },
+      "press": {
+        "type": "none"
+      }
+    },
+    {
+      "index": 19,
+      "label": "Dial 3",
+      "left": {
+        "type": "none"
+      },
+      "right": {
+        "type": "none"
+      },
+      "press": {
+        "type": "none"
+      }
+    }
+  ],
+  "sideButtons": [
+    {
+      "index": 15,
+      "action": {
+        "type": "none"
+      }
+    },
+    {
+      "index": 16,
+      "action": {
+        "type": "none"
+      }
+    }
+  ]
+}
