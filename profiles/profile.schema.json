@@ -1,0 +1,281 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "D200X Direct profile v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "name"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+    },
+    "keys": {
+      "type": "array",
+      "maxItems": 14,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "index"
+        ],
+        "properties": {
+          "index": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 13
+          },
+          "label": {
+            "$ref": "#/$defs/label"
+          },
+          "background": {
+            "type": "string",
+            "pattern": "^#[0-9a-fA-F]{6}$"
+          },
+          "action": {
+            "$ref": "#/$defs/action"
+          }
+        }
+      }
+    },
+    "dials": {
+      "type": "array",
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "index"
+        ],
+        "properties": {
+          "index": {
+            "enum": [
+              17,
+              18,
+              19
+            ]
+          },
+          "label": {
+            "$ref": "#/$defs/label"
+          },
+          "left": {
+            "$ref": "#/$defs/action"
+          },
+          "right": {
+            "$ref": "#/$defs/action"
+          },
+          "press": {
+            "$ref": "#/$defs/action"
+          }
+        }
+      }
+    },
+    "sideButtons": {
+      "type": "array",
+      "maxItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "index"
+        ],
+        "properties": {
+          "index": {
+            "enum": [
+              15,
+              16
+            ]
+          },
+          "action": {
+            "$ref": "#/$defs/action"
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "label": {
+      "type": "string",
+      "maxLength": 64
+    },
+    "action": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "const": "none"
+            },
+            "keys": {
+              "type": "array",
+              "maxItems": 0
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "type",
+            "keys"
+          ],
+          "properties": {
+            "type": {
+              "const": "hotkey"
+            },
+            "keys": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 5,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "enum": [
+                  "Ctrl",
+                  "Alt",
+                  "Shift",
+                  "Win",
+                  "Enter",
+                  "Escape",
+                  "Space",
+                  "Tab",
+                  "Backspace",
+                  "Delete",
+                  "Insert",
+                  "Home",
+                  "End",
+                  "PageUp",
+                  "PageDown",
+                  "Left",
+                  "Up",
+                  "Right",
+                  "Down",
+                  "VolumeMute",
+                  "VolumeDown",
+                  "VolumeUp",
+                  "MediaNext",
+                  "MediaPrevious",
+                  "MediaStop",
+                  "MediaPlayPause",
+                  "A",
+                  "B",
+                  "C",
+                  "D",
+                  "E",
+                  "F",
+                  "G",
+                  "H",
+                  "I",
+                  "J",
+                  "K",
+                  "L",
+                  "M",
+                  "N",
+                  "O",
+                  "P",
+                  "Q",
+                  "R",
+                  "S",
+                  "T",
+                  "U",
+                  "V",
+                  "W",
+                  "X",
+                  "Y",
+                  "Z",
+                  "0",
+                  "1",
+                  "2",
+                  "3",
+                  "4",
+                  "5",
+                  "6",
+                  "7",
+                  "8",
+                  "9",
+                  "F1",
+                  "F2",
+                  "F3",
+                  "F4",
+                  "F5",
+                  "F6",
+                  "F7",
+                  "F8",
+                  "F9",
+                  "F10",
+                  "F11",
+                  "F12",
+                  "F13",
+                  "F14",
+                  "F15",
+                  "F16",
+                  "F17",
+                  "F18",
+                  "F19",
+                  "F20",
+                  "F21",
+                  "F22",
+                  "F23",
+                  "F24"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "type",
+            "url"
+          ],
+          "properties": {
+            "type": {
+              "const": "open-url"
+            },
+            "url": {
+              "type": "string",
+              "format": "uri",
+              "pattern": "^https?://"
+            },
+            "keys": {
+              "type": "array",
+              "maxItems": 0
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "type",
+            "path"
+          ],
+          "properties": {
+            "type": {
+              "const": "launch"
+            },
+            "path": {
+              "type": "string",
+              "description": "Absolute local Windows .exe path, without arguments. Runtime validation checks this."
+            },
+            "keys": {
+              "type": "array",
+              "maxItems": 0
+            }
+          }
+        }
+      ]
+    }
+  }
+}

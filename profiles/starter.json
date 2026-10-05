@@ -1,0 +1,173 @@
+{
+  "schemaVersion": 1,
+  "name": "Starter",
+  "keys": [
+    {
+      "index": 0,
+      "label": "Key 00",
+      "background": "#102038",
+      "action": {
+        "type": "none"
+      }
+    },
+    {
+      "index": 1,
+      "label": "Key 01",
+      "background": "#102038",
+      "action": {
+        "type": "none"
+      }
+    },
+    {
+      "index": 2,
+      "label": "Key 02",
+      "background": "#102038",
+      "action": {
+        "type": "none"
+      }
+    },
+    {
+      "index": 3,
+      "label": "Key 03",
+      "background": "#102038",
+      "action": {
+        "type": "none"
+      }
+    },
+    {
+      "index": 4,
+      "label": "Key 04",
+      "background": "#102038",
+      "action": {
+        "type": "none"
+      }
+    },
+    {
+      "index": 5,
+      "label": "Key 05",
+      "background": "#102038",
+      "action": {
+        "type": "none"
+      }
+    },
+    {
+      "index": 6,
+      "label": "Key 06",
+      "background": "#102038",
+      "action": {
+        "type": "none"
+      }
+    },
+    {
+      "index": 7,
+      "label": "Key 07",
+      "background": "#102038",
+      "action": {
+        "type": "none"
+      }
+    },
+    {
+      "index": 8,
+      "label": "Key 08",
+      "background": "#102038",
+      "action": {
+        "type": "none"
+      }
+    },
+    {
+      "index": 9,
+      "label": "Key 09",
+      "background": "#102038",
+      "action": {
+        "type": "none"
+      }
+    },
+    {
+      "index": 10,
+      "label": "Key 10",
+      "background": "#102038",
+      "action": {
+        "type": "none"
+      }
+    },
+    {
+      "index": 11,
+      "label": "Key 11",
+      "background": "#102038",
+      "action": {
+        "type": "none"
+      }
+    },
+    {
+      "index": 12,
+      "label": "Key 12",
+      "background": "#102038",
+      "action": {
+        "type": "none"
+      }
+    },
+    {
+      "index": 13,
+      "label": "Key 13",
+      "background": "#102038",
+      "action": {
+        "type": "none"
+      }
+    }
+  ],
+  "dials": [
+    {
+      "index": 17,
+      "label": "Dial 1",
+      "left": {
+        "type": "none"
+      },
+      "right": {
+        "type": "none"
+      },
+      "press": {
+        "type": "none"
+      }
+    },
+    {
+      "index": 18,
+      "label": "Dial 2",
+      "left": {
+        "type": "none"
+      },
+      "right": {
+        "type": "none"
+      },
+      "press": {
+        "type": "none"
+      }
+    },
+    {
+      "index": 19,
+      "label": "Dial 3",
+      "left": {
+        "type": "none"
+      },
+      "right": {
+        "type": "none"
+      },
+      "press": {
+        "type": "none"
+      }
+    }
+  ],
+  "sideButtons": [
+    {
+      "index": 15,
+      "action": {
+        "type": "none"
+      }
+    },
+    {
+      "index": 16,
+      "action": {
+        "type": "none"
+      }
+    }
+  ]
+}

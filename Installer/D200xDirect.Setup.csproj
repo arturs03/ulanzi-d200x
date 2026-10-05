@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>D200xDirect-Setup</AssemblyName>
+    <Version>0.1.0-preview.1</Version>
+    <Product>D200X Direct Setup</Product>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="$(PayloadPath)" LogicalName="D200XDirect.App.zip" Condition="'$(PayloadPath)' != ''" />
+  </ItemGroup>
+</Project>

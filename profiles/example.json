@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "name": "Example — customize before use",
+  "keys": [
+    {
+      "index": 0,
+      "label": "Web",
+      "background": "#164063",
+      "action": {
+        "type": "open-url",
+        "url": "https://example.com"
+      }
+    },
+    {
+      "index": 1,
+      "label": "Play / Pause",
+      "background": "#28543A",
+      "action": {
+        "type": "hotkey",
+        "keys": [
+          "MediaPlayPause"
+        ]
+      }
+    },
+    {
+      "index": 2,
+      "label": "Discord Mute",
+      "background": "#414168",
+      "action": {
+        "type": "hotkey",
+        "keys": [
+          "Ctrl",
+          "Alt",
+          "Shift",
+          "M"
+        ]
+      }
+    }
+  ],
+  "dials": [
+    {
+      "index": 17,
+      "label": "Volume",
+      "left": {
+        "type": "hotkey",
+        "keys": [
+          "VolumeDown"
+        ]
+      },
+      "right": {
+        "type": "hotkey",
+        "keys": [
+          "VolumeUp"
+        ]
+      },
+      "press": {
+        "type": "hotkey",
+        "keys": [
+          "VolumeMute"
+        ]
+      }
+    }
+  ],
+  "sideButtons": []
+}

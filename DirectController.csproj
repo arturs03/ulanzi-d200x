@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>D200xDirectController</AssemblyName>
+    <Version>0.1.0-preview.1</Version>
+    <Description>Experimental Windows USB diagnostic controller for the Ulanzi D200X.</Description>
+    <Product>D200X Direct</Product>
+    <Copyright>Copyright (c) 2026 D200X Direct contributors</Copyright>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="Desktop/**/*.cs" />
+    <Compile Remove="Installer/**/*.cs" />
+  </ItemGroup>
+</Project>
