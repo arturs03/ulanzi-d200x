@@ -13,10 +13,10 @@ Evidence: user-supplied app log, with local times 11:06:58–11:08:20 (Europe/Ri
 | Dial presses | No dial press/release events in the supplied log | Pending |
 | Side buttons | Press/release on indices 15 and 16 | Confirmed |
 | Display transport | App reported Starter transfer completed, 21,203 bytes | Completed from the app's perspective |
-| Physical display | User's general positive report does not specifically confirm numbered labels | Awaiting explicit confirmation |
+| Physical display | User subsequently answered yes to the numbered-label confirmation | Correct numbered Starter labels confirmed |
 | Action execution | Installed Starter profile has only none actions; no action execution entries supplied | Pending |
 | Session errors | No error/disconnection entries in the supplied excerpt | No error shown in this short test |
 
 Input continued after the display transfer. This supports successful communication following that transfer, but does not establish unplug/replug, sleep/wake, Studio restoration or crash-free operation during extended use.
 
-Next: check missing controls and actual images, then one simple action, followed by lifecycle and normal-workload sessions. Changes to key placement and daily-use mappings require the user's desired layout.
+Next: check missing controls, then one simple action, followed by lifecycle and normal-workload sessions. Changes to key placement and daily-use mappings require the user's desired layout.
