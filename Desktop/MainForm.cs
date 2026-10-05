@@ -3,19 +3,10 @@ using System.Text.Json;
 
 namespace D200xDirect.App;
 
-internal sealed class MainForm : Form
+internal sealed partial class MainForm : Form
 {
     readonly string profileDirectory;
-    readonly Label status = new() { AutoSize = true, Text = "Stopped — device operation has not been physically verified.", Padding = new Padding(0, 8, 0, 8) };
-    readonly TextBox log = new() { Multiline = true, ReadOnly = true, ScrollBars = ScrollBars.Vertical, Dock = DockStyle.Fill, Font = new Font("Consolas", 10) };
-    readonly TableLayoutPanel grid = new() { ColumnCount = 5, RowCount = 3, Dock = DockStyle.Fill, Padding = new Padding(4) };
-    readonly Button start = new() { Text = "Start listening", AutoSize = true };
-    readonly Button stop = new() { Text = "Stop", AutoSize = true, Enabled = false };
-    readonly Button sendPage = new() { Text = "Send profile to device", AutoSize = true };
-    readonly CheckBox actions = new() { Text = "Enable configured actions", AutoSize = true, Padding = new Padding(8, 7, 0, 0) };
-    readonly CheckBox keepAwake = new() { Text = "Keep device awake (experimental)", AutoSize = true, Padding = new Padding(8, 7, 0, 0) };
     readonly NotifyIcon tray;
-    readonly Font keyFont = new("Segoe UI", 10, FontStyle.Bold);
     DeckProfile profile = new();
     CancellationTokenSource? session;
     Mutex? deviceOwner;
@@ -28,36 +19,7 @@ internal sealed class MainForm : Form
     public MainForm(string? configurationDirectory = null)
     {
         profileDirectory = configurationDirectory ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "D200XDirect");
-        Text = "D200X Direct • Preview";
-        ClientSize = new Size(1020, 740);
-        MinimumSize = new Size(850, 640);
-        Font = new Font("Segoe UI", 10);
-        StartPosition = FormStartPosition.CenterScreen;
-        var layout = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 6, Padding = new Padding(18) };
-        layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-        layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-        layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-        layout.RowStyles.Add(new RowStyle(SizeType.Percent, 62));
-        layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-        layout.RowStyles.Add(new RowStyle(SizeType.Percent, 38));
-        layout.Controls.Add(new Label { Text = "D200X Direct", Font = new Font("Segoe UI", 22, FontStyle.Bold), AutoSize = true });
-        var controls = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill, WrapContents = true };
-        controls.Controls.AddRange([start, stop, sendPage, actions, keepAwake]);
-        AddButton(controls, "Inspect USB", Inspect);
-        AddButton(controls, "Hide to tray", Hide);
-        layout.Controls.Add(controls);
-        layout.Controls.Add(status);
-        for (var i = 0; i < 5; i++) grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20));
-        for (var i = 0; i < 3; i++) grid.RowStyles.Add(new RowStyle(SizeType.Percent, 100f / 3));
-        layout.Controls.Add(grid);
-        var editing = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill };
-        AddButton(editing, "Edit profile JSON", () => OpenText(ProfilePath));
-        AddButton(editing, "Reload profile", ReloadProfile);
-        AddButton(editing, "Open profile folder", () => Process.Start(new ProcessStartInfo(profileDirectory) { UseShellExecute = true }));
-        AddButton(editing, "Instructions for your LLM", () => OpenText(Path.Combine(AppContext.BaseDirectory, "docs", "customization.md")));
-        layout.Controls.Add(editing);
-        layout.Controls.Add(log);
-        Controls.Add(layout);
+        BuildLayout();
         var trayMenu = new ContextMenuStrip();
         trayMenu.Items.Add("Show D200X Direct", null, (_, _) => ShowWindow());
         trayMenu.Items.Add("Stop device control", null, (_, _) => session?.Cancel());
@@ -69,7 +31,7 @@ internal sealed class MainForm : Form
         sendPage.Click += async (_, _) => await SendPage();
         actions.CheckedChanged += (_, _) => Volatile.Write(ref actionsEnabled, actions.Checked ? 1 : 0);
         FormClosing += OnClosing;
-        FormClosed += (_, _) => { tray.Dispose(); session?.Dispose(); keyFont.Dispose(); };
+        FormClosed += (_, _) => { tray.Dispose(); session?.Dispose(); };
         Directory.CreateDirectory(profileDirectory);
         if (!File.Exists(ProfilePath))
         {
@@ -78,14 +40,7 @@ internal sealed class MainForm : Form
             else File.WriteAllText(ProfilePath, JsonSerializer.Serialize(new DeckProfile(), Profiles.JsonOptions));
         }
         ReloadProfile();
-        Log("Preview: Start listens only. Check Enable configured actions to run your mappings. Display updates are explicit.");
-    }
-
-    void AddButton(FlowLayoutPanel parent, string text, Action action)
-    {
-        var button = new Button { Text = text, AutoSize = true };
-        button.Click += (_, _) => { try { action(); } catch (Exception error) { Log(error.Message); } };
-        parent.Controls.Add(button);
+        Log("Ready. Send your page, enable Keep awake, then Start listening. Actions are off until you enable them.");
     }
 
     void ShowWindow() { Show(); WindowState = FormWindowState.Normal; Activate(); }
@@ -98,20 +53,8 @@ internal sealed class MainForm : Form
             if (new FileInfo(ProfilePath).Length > 1_048_576) throw new IOException("Profile exceeds 1 MB.");
             var candidate = Profiles.Parse(File.ReadAllText(ProfilePath));
             Volatile.Write(ref profile, candidate);
-            foreach (Control control in grid.Controls.Cast<Control>().ToArray()) { grid.Controls.Remove(control); control.Dispose(); }
-            for (var i = 0; i < 14; i++)
-            {
-                var key = candidate.Keys.FirstOrDefault(k => k.Index == i) ?? new KeyConfig { Index = i };
-                var card = new Label
-                {
-                    Text = $"{i:D2}  {(key.Label.Length > 18 ? key.Label[..18] + "…" : key.Label)}\n{key.Action.Type}", Dock = DockStyle.Fill,
-                    AutoEllipsis = true,
-                    TextAlign = ContentAlignment.MiddleCenter, BackColor = ColorTranslator.FromHtml(key.Background),
-                    ForeColor = Color.White, Margin = new Padding(5), Font = keyFont
-                };
-                grid.Controls.Add(card, i % 5, i / 5);
-                if (i == 13) grid.SetColumnSpan(card, 2);
-            }
+            RefreshDeck();
+            SelectControl(selectedIndex);
             Log($"Loaded profile: {candidate.Name}. Dials: {candidate.Dials.Count}; side buttons: {candidate.SideButtons.Count}. Device display is updated separately.");
         }
         catch (Exception error) { Log($"Profile rejected; current mappings kept. {error.Message}"); }
@@ -147,7 +90,7 @@ internal sealed class MainForm : Form
     }
 
     void ReleaseDevice() { deviceOwner?.ReleaseMutex(); deviceOwner?.Dispose(); deviceOwner = null; }
-    void SetBusy(bool busy) { start.Enabled = sendPage.Enabled = keepAwake.Enabled = !busy; stop.Enabled = busy; }
+    void SetBusy(bool busy) { start.Visible = !busy; stop.Visible = busy; start.Enabled = sendPage.Enabled = keepAwake.Enabled = !busy; stop.Enabled = busy; }
 
     async Task StartSession()
     {
@@ -161,7 +104,7 @@ internal sealed class MainForm : Form
             session = new CancellationTokenSource();
             var token = session.Token;
             SetBusy(true);
-            status.Text = sendKeepAwake ? "Listening — keep-awake enabled; actions run only when enabled." : "Listening — press buttons and turn dials. Actions run only when enabled.";
+            SetStatus("Listening", sendKeepAwake ? "Keep-awake running · Keep the app open or hide it to the tray." : "Keep-awake is off · The device may return to its default screen.", true);
             sessionTask = Task.Run(async () =>
             {
                 using var stream = HidDevice.Open(device, false);
@@ -184,7 +127,8 @@ internal sealed class MainForm : Form
                     if (Volatile.Read(ref actionsEnabled) == 0) continue;
                     var action = Profiles.ActionFor(Volatile.Read(ref profile), input);
                     if (action is null || action.Type == "none") continue;
-                    try { ActionRunner.Run(action); Log($"Ran {action.Type} for {input.Index}."); }
+                    try { await ActionRunner.RunAsync(action, input, readToken); Log($"Ran {action.Type} for {input.Index}."); }
+                    catch (OperationCanceledException) when (readToken.IsCancellationRequested) { break; }
                     catch (Exception error) { Log($"Action failed: {error.Message}"); }
                 }
                 }
@@ -212,7 +156,7 @@ internal sealed class MainForm : Form
             session?.Dispose(); session = null;
             ReleaseDevice();
             SetBusy(false);
-            status.Text = "Stopped — profile remains saved. No automatic reconnect or startup.";
+            SetStatus("Stopped", "Start listening to run your controls and keep-awake updates.");
         }
     }
 
@@ -226,7 +170,7 @@ internal sealed class MainForm : Form
             var snapshot = Volatile.Read(ref profile);
             Profiles.Validate(snapshot);
             SetBusy(true);
-            status.Text = "Sending profile images…";
+            SetStatus("Sending page", "Updating the physical display…");
             session = new CancellationTokenSource(TimeSpan.FromSeconds(30));
             var token = session.Token;
             sessionTask = Task.Run(async () =>
@@ -247,7 +191,7 @@ internal sealed class MainForm : Form
         {
             sessionTask = null;
             session?.Dispose(); session = null;
-            ReleaseDevice(); SetBusy(false); status.Text = "Stopped — verify the display on your device.";
+            ReleaseDevice(); SetBusy(false); SetStatus("Stopped", pageSent ? "Page sent · Enable Keep awake, then Start listening." : "Page not sent · See activity for details.");
         }
     }
 

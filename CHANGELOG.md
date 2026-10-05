@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.0-preview.4
+
+- Minimal dark desktop layout with rounded controls, a clickable deck, dials/side buttons, clearer listening/keep-awake status and an activity area.
+- Edit labels, colors and actions directly in the app. Configure dial left/right/press separately. Validated saves preserve other mappings; invalid edits leave the saved profile intact. Display uploads remain explicit.
+- Add a shared ActionCatalog / IActionModule API for action metadata, validation and dispatch. Existing shortcuts, volume/media keys, websites and application launches use this registry; JSON schema version 1 remains compatible.
+- Add hardware-free module and editing checks. No new renderer, driver, service or automatic startup is introduced.
+
+The user reported that preview 3 no longer sleeps with keep-awake/listening enabled. This is a successful session report, not a guarantee of long-term reliability. Preview 4 still requires physical action/lifecycle checks.
+
 ## 0.1.0-preview.3
 
 - Add an opt-in experimental Keep device awake mode for the reported one-minute return to stock graphics. It requires a profile transfer in the current app session, then sends one small image-mode/time packet every 5 seconds while listening.

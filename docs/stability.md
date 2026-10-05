@@ -10,12 +10,13 @@ Current safeguards:
 - No AMD telemetry polling or embedded browser/game rendering engine.
 - Known Studio process and concurrent direct sessions are checked before active device access. Keep other third-party controllers closed, and do not launch Studio during a direct session.
 - Display transfers are explicit, built before opening the writable device, and have cancellation/timeouts. There are no automatic retry or reconnect loops.
-- Preview 3's optional Keep device awake checkbox defaults off. When explicitly selected after a page transfer, an active session sends at most one small image-mode/time update every 5 seconds, with a 3-second write deadline. Failure on either the reader or writer cancels both; there are no write retries. This adds no telemetry polling or repeated ZIP uploads. Physical idle prevention/flicker remains unverified.
+- The optional Keep awake toggle defaults off. When explicitly selected after a page transfer, an active session sends at most one small image-mode/time update every 5 seconds, with a 3-second write deadline. Failure on either the reader or writer cancels both; there are no write retries. This adds no telemetry polling or repeated ZIP uploads. The user confirmed idle prevention in a session; extended duration and possible flicker remain unverified.
+- Preview 4 uses CPU/GDI drawing for its dark interface. The action editor validates a copy before replacing the saved profile and never executes a mapping on save. Execution uses the same module validation and honors cancellation before entering Windows capability calls. Modules are compiled app code, not a sandbox for arbitrary third-party code; see docs/actions-api.md.
 - I/O failures stop the device session. Action errors are reported separately. Physical recovery remains unverified.
 
 Validation still required:
 
-1. Complete physical input coverage: all dial presses are still missing. Press/release for all 14 LCD keys, all dial rotations and both side buttons are confirmed; the Starter mappings were all inactive.
+1. Complete physical input coverage: dial 17 press remains unverified; dial presses 18 and 19 are confirmed. Press/release for all 14 LCD keys, all dial rotations and both side buttons are confirmed; the Starter mappings were all inactive.
 2. The numbered Starter labels on the physical display are confirmed. Check disconnection/recovery behavior next.
 3. Individual action mappings, then repeated sessions under ordinary workloads.
 4. Stop/exit, unplug/replug and sleep/wake behavior.

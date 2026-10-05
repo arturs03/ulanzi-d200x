@@ -64,6 +64,8 @@ public static class SelfTests
         Check(Profiles.ActionFor(profile, new(3, "key", "release")) == null, "release does not trigger actions");
         Check(Profiles.ActionFor(profile, new(17, "dial", "right"))?.Keys.SequenceEqual(new[] { "VolumeUp" }) == true, "profile dial action mapping");
         Check(Profiles.Parse(System.Text.Json.JsonSerializer.Serialize(profile, Profiles.JsonOptions)).Name == "Example", "profile round trip");
+        var serializedAction = System.Text.Json.JsonSerializer.Serialize(profile.Keys[0].Action, Profiles.JsonOptions);
+        Check(!serializedAction.Contains("\"url\"") && !serializedAction.Contains("\"path\""), "saved shortcuts omit fields outside their JSON schema");
         void Reject(string json, string name)
         {
             try { Profiles.Parse(json); }
@@ -122,6 +124,42 @@ public static class SelfTests
             Check(DeviceSession.KeepAwakeInterval == TimeSpan.FromSeconds(5), "keep-awake limited to 12 small commands per minute");
         }
         CheckKeepAwake().GetAwaiter().GetResult();
+        var platform = new RecordingPlatform();
+        var context = new ActionContext(new(3, "key", "press"), platform);
+        ActionCatalog.Default.ExecuteAsync(new DeckAction { Type = "hotkey", Keys = ["VolumeUp"] }, context, CancellationToken.None).GetAwaiter().GetResult();
+        Check(platform.Calls.SequenceEqual(new[] { "hotkey:VolumeUp" }), "module dispatch uses host capability");
+        ActionCatalog.Default.ExecuteAsync(new DeckAction { Type = "none" }, context, CancellationToken.None).GetAwaiter().GetResult();
+        Check(platform.Calls.Count == 1, "unassigned module has no side effects");
+        try { ActionCatalog.Default.ExecuteAsync(new DeckAction { Type = "open-url", Url = "file:///C:/test.exe" }, context, CancellationToken.None).GetAwaiter().GetResult(); throw new Exception("API bypassed validation."); }
+        catch (ArgumentException) { Check(platform.Calls.Count == 1, "invalid API action rejected before host access"); }
+        using (var cancelled = new CancellationTokenSource())
+        {
+            cancelled.Cancel();
+            try { ActionCatalog.Default.ExecuteAsync(new DeckAction { Type = "hotkey", Keys = ["VolumeUp"] }, context, cancelled.Token).GetAwaiter().GetResult(); throw new Exception("Cancelled API executed."); }
+            catch (OperationCanceledException) { Check(platform.Calls.Count == 1, "cancelled module has no side effects"); }
+        }
+        var module = BuiltInActions.Create().First();
+        try { new ActionCatalog([module, module]); throw new Exception("Duplicate module accepted."); }
+        catch (ArgumentException) { checks++; }
+        Check(ActionCatalog.Default.Descriptors.Select(d => d.Id).SequenceEqual(new[] { "none", "hotkey", "open-url", "launch" }), "editor and API share supported action catalog");
+        var edited = ProfileEditing.Update(profile, 17, "left", "Volume", "", new DeckAction { Type = "hotkey", Keys = ["VolumeDown"] });
+        Check(edited.Dials.Single(d => d.Index == 17).Left.Keys.Single() == "VolumeDown"
+            && edited.Dials.Single(d => d.Index == 17).Right.Keys.Single() == "VolumeUp"
+            && profile.Dials.Single(d => d.Index == 17).Left.Type == "none", "dial edit preserves other gestures and original profile");
+        try { ProfileEditing.Update(profile, 3, "press", "Changed", "#102038", new DeckAction { Type = "hotkey", Keys = ["Ctrl"] }); throw new Exception("Invalid edit accepted."); }
+        catch (ArgumentException) { Check(profile.Keys.Single(k => k.Index == 3).Label == "Mute", "rejected edit leaves original intact"); }
+        var sideEdited = ProfileEditing.Update(profile, 15, "press", "", "", new DeckAction { Type = "open-url", Url = "https://example.com" });
+        Check(sideEdited.SideButtons.Single().Action.Type == "open-url" && profile.SideButtons.Count == 0, "missing side mapping created without mutating original");
+        try { ProfileEditing.Update(profile, 14, "press", "", "#102038", new DeckAction()); throw new Exception("Phantom editor control accepted."); }
+        catch (ArgumentException) { checks++; }
         Console.WriteLine($"PASS: {checks} protocol, input and image checks. No hardware was accessed.");
+    }
+
+    sealed class RecordingPlatform : IActionPlatform
+    {
+        public List<string> Calls { get; } = [];
+        public void SendHotkey(IReadOnlyList<string> keys) => Calls.Add("hotkey:" + string.Join('+', keys));
+        public void OpenUrl(string url) => Calls.Add("url:" + url);
+        public void LaunchApplication(string path) => Calls.Add("launch:" + path);
     }
 }

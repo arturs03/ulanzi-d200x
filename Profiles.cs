@@ -50,6 +50,7 @@ public static class Profiles
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
         WriteIndented = true,
         MaxDepth = 16
     };
@@ -106,38 +107,7 @@ public static class Profiles
             throw new ArgumentException("Labels must contain at most 64 printable characters.");
     }
 
-    static void ValidateAction(DeckAction? action)
-    {
-        if (action is null || action.Keys is null) throw new ArgumentException("Actions must not be null.");
-        if (action.Type is not ("none" or "hotkey" or "open-url" or "launch"))
-            throw new ArgumentException("Action type must be none, hotkey, open-url or launch.");
-        if (action.Type == "hotkey")
-        {
-            if (action.Keys.Count is < 1 or > 5 || action.Keys.Any(k => k is null || !VirtualKeys.ContainsKey(k)))
-                throw new ArgumentException("Hotkeys need 1–5 supported key names. See docs/customization.md.");
-            if (action.Keys.Distinct(StringComparer.OrdinalIgnoreCase).Count() != action.Keys.Count)
-                throw new ArgumentException("Hotkey keys must not be duplicated.");
-            var modifiers = new HashSet<string>(["Ctrl", "Alt", "Shift", "Win"], StringComparer.OrdinalIgnoreCase);
-            if (action.Keys.Count(k => !modifiers.Contains(k)) != 1)
-                throw new ArgumentException("Hotkeys need exactly one main key, plus optional modifiers.");
-        }
-        else if (action.Keys.Count != 0) throw new ArgumentException("keys only applies to hotkey actions.");
-        if (action.Type == "open-url")
-        {
-            if (!Uri.TryCreate(action.Url, UriKind.Absolute, out var uri) || uri.Scheme is not ("http" or "https")
-                || !string.IsNullOrEmpty(uri.UserInfo))
-                throw new ArgumentException("URLs must be absolute HTTP/HTTPS addresses without credentials.");
-        }
-        else if (action.Url is not null) throw new ArgumentException("url only applies to open-url actions.");
-        if (action.Type == "launch")
-        {
-            if (string.IsNullOrWhiteSpace(action.Path) || !System.IO.Path.IsPathFullyQualified(action.Path)
-                || action.Path.StartsWith(@"\\") || !action.Path.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)
-                || action.Path.Contains('"'))
-                throw new ArgumentException("launch requires an absolute local .exe path, without arguments.");
-        }
-        else if (action.Path is not null) throw new ArgumentException("path only applies to launch actions.");
-    }
+    static void ValidateAction(DeckAction? action) => ActionCatalog.Default.Validate(action);
 
     public static DeckAction? ActionFor(DeckProfile profile, InputEvent input)
     {

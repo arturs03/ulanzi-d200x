@@ -39,3 +39,9 @@ Preview 3 adds a checkbox, off by default, that sends one image-mode/time packet
 Test: send the profile, enable Keep device awake, start listening with actions disabled, and wait at least five minutes. Confirm the page remains, inputs continue and the wide screen does not blink. Stop afterward and compare whether the original approximately one-minute fallback returns. A short successful run is not proof of overall stability.
 
 The next preview 3 log at 11:31:31–11:32:18 records a 23,007-byte Starter transfer with image mode, input on all 14 keys, all dial rotation directions, both side buttons, and presses on dials 18 and 19. The user still reports the one-minute fallback. No Keep-awake active or sent messages appear in this excerpt; a test with keep-awake enabled remains pending. These entries do not prove a firmware reset, RAM clearing or Windows crash.
+
+The next log confirms keep-awake enabled at 11:39:17 and the first command sent at 11:39:22. The user subsequently reported that the device no longer sleeps. The workaround is physically confirmed for that session; exact elapsed duration, possible flicker and extended workload stability were not explicitly reported. Listening alone does not send keep-awake updates: the checkbox must also be enabled.
+
+## Dark UI and module API — preview 4
+
+Automated checks cover module dispatch with a fake platform, validation/cancellation before host access, duplicate-module rejection, schema-compatible serialization and edits that preserve other controls/gestures. The desktop check uses an isolated fixture profile, saves a dial mapping and Key 13 label, and verifies invalid input leaves the saved file unchanged. Rendered layouts are inspected separately. These checks send no USB packets, hotkeys or application launches. Physical action delivery and the updated UI's device lifecycle still need testing.

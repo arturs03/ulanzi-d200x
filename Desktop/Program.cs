@@ -36,12 +36,25 @@ internal static class Program
             using var form = new MainForm(fixtureDirectory);
             form.Show();
             Application.DoEvents();
+            Capture("ui-check.png");
+            form.CheckEditor();
+            Application.DoEvents();
             form.PerformLayout();
-            using var image = new Bitmap(form.Width, form.Height);
-            form.DrawToBitmap(image, new Rectangle(0, 0, image.Width, image.Height));
-            image.Save(Path.Combine(AppContext.BaseDirectory, "ui-check.png"), System.Drawing.Imaging.ImageFormat.Png);
+            File.WriteAllText(Path.Combine(AppContext.BaseDirectory, "ui-check-layout.txt"), $"DPI {form.DeviceDpi}; size {form.ClientSize}; scaling {form.AutoScaleDimensions}");
+            Capture("ui-check-editor.png");
+            form.Size = form.MinimumSize;
+            Application.DoEvents();
+            Capture("ui-check-compact.png");
             form.Close();
             return;
+
+            void Capture(string name)
+            {
+                form.PerformLayout();
+                using var image = new Bitmap(form.Width, form.Height);
+                form.DrawToBitmap(image, new Rectangle(0, 0, image.Width, image.Height));
+                image.Save(Path.Combine(AppContext.BaseDirectory, name), System.Drawing.Imaging.ImageFormat.Png);
+            }
         }
         using var instance = new Mutex(true, "Local\\D200xDirect.App", out var first);
         if (!first) { MessageBox.Show("D200X Direct is already open.", "D200X Direct"); return; }

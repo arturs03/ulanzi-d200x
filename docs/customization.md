@@ -1,12 +1,14 @@
 # Customize D200X Direct with ChatGPT or another LLM
 
-The app stores your editable profile at `%APPDATA%\D200XDirect\profile.json`. Click **Edit profile JSON** to open it. An LLM can change this file; it does not need to change C# or rebuild the app. An LLM with access to your local files can edit it directly. In a normal chat, copy the generated JSON into the file yourself.
+The app stores your editable profile at `%APPDATA%\D200XDirect\profile.json`. Click **Edit JSON** to open it. An LLM can change this file; it does not need to change C# or rebuild the app. An LLM with access to your local files can edit it directly. In a normal chat, copy the generated JSON into the file yourself.
 
-Click **Reload profile** after saving. Invalid profiles are rejected and the last valid mappings remain active. Reloading never changes the device display: stop listening, then click **Send profile to device** explicitly. Confirm the actual image on the D200X. Fully exit Studio before using the device from this app.
+Click **Reload** after saving. Invalid profiles are rejected and the last valid mappings remain active. Reloading never changes the device display: stop listening, then click **Send to device** explicitly. Confirm the actual image on the D200X. Fully exit Studio before using the device from this app.
 
-The app starts stopped, with actions disabled. Click **Start listening** to log physical input. Only check **Enable configured actions** when you want your mappings to execute. No app configures Discord keybinds for you; its corresponding hotkey must also be configured in Discord. Hotkeys use the current foreground application and may be rejected by elevated apps.
+The app starts stopped, with actions disabled. Click **Start listening** to log physical input. Only check **Run actions** when you want your mappings to execute. No app configures Discord keybinds for you; its corresponding hotkey must also be configured in Discord. Hotkeys use the current foreground application and may be rejected by elevated apps.
 
-Keep device awake is a separate experimental app checkbox, not a JSON action. It defaults off. After sending a profile, select it before listening to send one small image-mode/time update every 5 seconds while the session runs. It is intended to test the reported one-minute idle fallback; physical behavior and possible flicker still need verification. Do not add unrecognized keep-awake fields to profiles.
+Keep device awake is a separate experimental app checkbox, not a JSON action. It defaults off. After sending a profile, select it before listening to send one small image-mode/time update every 5 seconds while the session runs. It is intended to test the reported one-minute idle fallback; the user confirmed that the device stays awake in a session; extended duration and possible flicker still need testing. Do not add unrecognized keep-awake fields to profiles.
+
+The dark app also lets you select any physical control and edit its mapping in the inspector. **Save mapping** writes the same validated profile, without executing it or uploading display images. Developers can extend the compiled action registry using [the module API](actions-api.md).
 
 ## Prompt to give an LLM
 

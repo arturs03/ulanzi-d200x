@@ -4,23 +4,20 @@ using System.Runtime.InteropServices;
 
 namespace D200xDirect.App;
 
-internal static class ActionRunner
+internal sealed class ActionRunner : IActionPlatform
 {
-    public static void Run(DeckAction action)
-    {
-        switch (action.Type)
-        {
-            case "none": return;
-            case "open-url": Process.Start(new ProcessStartInfo(action.Url!) { UseShellExecute = true }); return;
-            case "launch":
-                if (!File.Exists(action.Path)) throw new FileNotFoundException("Configured application does not exist.", action.Path);
-                Process.Start(new ProcessStartInfo(action.Path!) { UseShellExecute = false }); return;
-            case "hotkey": SendKeys(action.Keys); return;
-            default: throw new ArgumentException("Unsupported action.");
-        }
-    }
+    public static readonly ActionRunner Platform = new();
+    public static ValueTask RunAsync(DeckAction action, InputEvent input, CancellationToken cancellation)
+        => ActionCatalog.Default.ExecuteAsync(action, new ActionContext(input, Platform), cancellation);
 
-    static void SendKeys(List<string> keys)
+    public void OpenUrl(string url) => Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+    public void LaunchApplication(string path)
+    {
+        if (!File.Exists(path)) throw new FileNotFoundException("Configured application does not exist.", path);
+        Process.Start(new ProcessStartInfo(path) { UseShellExecute = false });
+    }
+    public void SendHotkey(IReadOnlyList<string> keys) => SendKeys(keys);
+    static void SendKeys(IReadOnlyList<string> keys)
     {
         var modifiers = new HashSet<string>(["Ctrl", "Alt", "Shift", "Win"], StringComparer.OrdinalIgnoreCase);
         var codes = keys.OrderBy(k => modifiers.Contains(k) ? 0 : 1).Select(k => Profiles.VirtualKeys[k]).ToArray();
