@@ -14,7 +14,7 @@ Current safeguards:
 
 Validation still required:
 
-1. Complete physical input coverage: keys 7–9 and all dial presses are still missing from the first supplied test log. Other key inputs, dial rotations and side buttons are confirmed; the Starter mappings were all inactive.
+1. Complete physical input coverage: all dial presses are still missing. Press/release for all 14 LCD keys, all dial rotations and both side buttons are confirmed; the Starter mappings were all inactive.
 2. The numbered Starter labels on the physical display are confirmed. Check disconnection/recovery behavior next.
 3. Individual action mappings, then repeated sessions under ordinary workloads.
 4. Stop/exit, unplug/replug and sleep/wake behavior.

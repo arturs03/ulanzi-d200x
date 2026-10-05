@@ -19,4 +19,4 @@ Protocol and desktop checks pass. Correction of the physical key 13 overlay awai
 - LLM-editable JSON profiles for key labels/colors, hotkeys, app launches, URLs and dial/side actions.
 - Strict profile validation with last-valid-profile preservation and actions disabled initially.
 
-The first physical-test log confirms keys 0–6 and 10–13, both dial directions on all three dials, and both side buttons. Profile transfer completed, and the user confirmed the correct physical numbered labels. The remaining inputs and mapped action delivery still need confirmation. This is an experimental preview, not a verified complete Studio replacement.
+Physical-test logs confirm press/release for all 14 LCD keys, both dial directions on all three dials, and both side buttons. Profile transfer completed, and the user confirmed the physical numbered labels with an overlap on key 13. Dial presses and mapped action delivery still need confirmation. This is an experimental preview, not a verified complete Studio replacement.

@@ -2,7 +2,7 @@
 
 An independent Windows app for controlling a **Ulanzi D200X** directly over USB, with profiles that ChatGPT or another LLM can edit. Includes a desktop interface, tray icon, per-user installer and documented JSON configuration. No Ulanzi Studio plugins, LLM API account or scripting engine are required.
 
-**Experimental preview:** device enumeration, a subset of physical key inputs, all three dials turning, both side buttons and the numbered Starter page on the physical display are verified on a D200X. Automated checks pass. Mapped actions and long-term stability remain unverified. This is not yet a verified complete Studio replacement or a fix for PC crashes.
+**Experimental preview:** device enumeration, all 14 LCD key inputs, all three dials turning, both side buttons and the numbered Starter page on the physical display are verified on a D200X. Automated checks pass. Dial presses, the key 13 overlay correction, mapped actions and long-term stability remain unverified. This is not yet a verified complete Studio replacement or a fix for PC crashes.
 
 ## Install
 
@@ -62,7 +62,7 @@ Stability is a core requirement: preventing application errors, black screens an
 
 - Observed D200X: VID `2207`, PID `0019`, compatible input/output reports of 1025 bytes including Windows report ID 0. The separate keyboard interface is not used.
 - Input decoding, report framing, ZIP transfer boundaries/reassembly, PNG generation, JSON validation and action selection have automated checks.
-- Physical-test evidence: keys 0–6 and 10–13 have press/release events; dials 17–19 turn both ways; side buttons 15–16 have press/release events. Keys 7–9 and dial presses remain to be checked. See [hardware validation](docs/hardware-validation.md).
+- Physical-test evidence: all 14 keys (0–13) have press/release events; dials 17–19 turn both ways; side buttons 15–16 have press/release events. Dial presses remain to be checked. See [hardware validation](docs/hardware-validation.md).
 - A Starter profile display transfer completed, and the user confirmed the correct physical numbered labels. Action delivery, reconnect behavior, sleep/wake and long-term reliability remain unverified.
 - Preview 1 left the built-in CPU/RAM/GPU gauges overlapping key 13. Preview 2 explicitly selects image mode during page transfer and formats key 13 as the double-width screen. Its physical correction still needs confirmation. These are ordinary display commands; no firmware flashing or sensor polling is added.
 - One active profile; no dynamic sensors, custom image files, multiple pages, custom dial-area display, automatic reconnect or automatic startup yet.

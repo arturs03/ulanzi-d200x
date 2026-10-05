@@ -7,8 +7,7 @@ Evidence: user-supplied app log, with local times 11:06:58–11:08:20 (Europe/Ri
 | Check | Evidence | Status |
 | --- | --- | --- |
 | HID detection | Main interface usage 12/1, reports 1025/1025, report ID 0; separate keyboard interface 1/6, reports 9/2 | Confirmed |
-| LCD key input | Press/release on indices 0–6 and 10–13 | Confirmed for these 11 keys |
-| Remaining LCD keys | Indices 7, 8 and 9 are absent from the supplied log | Pending |
+| LCD key input | Initial log: indices 0–6 and 10–13; follow-up log at 11:13:06–11:13:08: indices 7, 8 and 9, each with press/release | Confirmed for all 14 keys |
 | Dial rotations | Left/right events for indices 17, 18 and 19 | Confirmed |
 | Dial presses | No dial press/release events in the supplied log | Pending |
 | Side buttons | Press/release on indices 15 and 16 | Confirmed |
@@ -19,7 +18,7 @@ Evidence: user-supplied app log, with local times 11:06:58–11:08:20 (Europe/Ri
 
 Input continued after the display transfer. This supports successful communication following that transfer, but does not establish unplug/replug, sleep/wake, Studio restoration or crash-free operation during extended use.
 
-Next: check missing controls, then one simple action, followed by lifecycle and normal-workload sessions. Changes to key placement and daily-use mappings require the user's desired layout.
+Next: check dial presses and the preview 2 overlay correction, then one simple action, followed by lifecycle and normal-workload sessions. Changes to key placement and daily-use mappings require the user's desired layout.
 
 ## Key 13 overlay correction — preview 2
 
