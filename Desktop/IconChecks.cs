@@ -1,0 +1,44 @@
+using System.Drawing.Imaging;
+
+namespace D200xDirect.App;
+
+internal static class IconChecks
+{
+    public static void Run(string fixtureDirectory)
+    {
+        var sourcePath = Path.Combine(fixtureDirectory, "sample-icon.png");
+        using (var sample = new Bitmap(300, 180))
+        {
+            using var graphics = Graphics.FromImage(sample); graphics.Clear(Color.Transparent);
+            graphics.FillRectangle(Brushes.AliceBlue, 40, 40, 220, 100); sample.Save(sourcePath, ImageFormat.Png);
+        }
+        var reference = IconStore.Import(sourcePath, fixtureDirectory);
+        if (IconStore.Import(sourcePath, fixtureDirectory) != reference) throw new IOException("Icon import did not reuse identical content.");
+        using (var decoded = IconStore.Load(reference, fixtureDirectory))
+        {
+            if (decoded.Width != 300 || decoded.Height != 180 || decoded.GetPixel(0, 0).A != 0) throw new IOException("Icon import changed dimensions/transparency.");
+        }
+        foreach (var icon in IconReferences.BuiltIns)
+        {
+            using var decoded = IconStore.Load(icon.Id, fixtureDirectory);
+            if (decoded.Width != 128 || decoded.Height != 128) throw new IOException("Invalid builtin icon.");
+        }
+        foreach (var index in new[] { 0, 13 })
+        {
+            var rendered = ProfileImages.Render(new KeyConfig { Index = index, Label = "Custom icon", Icon = reference }, fixtureDirectory);
+            if (IconReferences.InspectPng(rendered) != (196, 196)) throw new IOException("Custom device icon dimensions changed.");
+        }
+        File.WriteAllText(sourcePath, "invalid PNG");
+        try { IconStore.Import(sourcePath, fixtureDirectory); throw new IOException("Malformed icon accepted."); }
+        catch (ArgumentException) { } catch (IOException error) when (error.Message.StartsWith("Choose a PNG")) { }
+        try { IconStore.Load("icons/missing.png", fixtureDirectory); throw new IOException("Missing icon silently substituted."); }
+        catch (FileNotFoundException) { }
+        try { IconStore.Import(@"\\server\share\image.png", fixtureDirectory); throw new IOException("Network image imported."); }
+        catch (IOException error) when (error.Message.StartsWith("Choose a local PNG")) { }
+        var withIcons = Profiles.Parse(File.ReadAllText(Path.Combine(fixtureDirectory, "profile.json")));
+        withIcons.Keys[0].Icon = reference; withIcons.Keys[13].Icon = "builtin:usage";
+        var bundle = ProfileImages.Bundle(withIcons, fixtureDirectory);
+        if (!Protocol.CleanBoundaries(bundle)) throw new IOException("Icon page framing failed.");
+        File.WriteAllText(Path.Combine(fixtureDirectory, "profile.json"), System.Text.Json.JsonSerializer.Serialize(withIcons, Profiles.JsonOptions));
+    }
+}

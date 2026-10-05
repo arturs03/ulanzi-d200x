@@ -18,6 +18,7 @@ public sealed class KeyConfig
     public int Index { get; set; }
     public string Label { get; set; } = "";
     public string Background { get; set; } = "#102038";
+    public string? Icon { get; set; }
     public DeckAction Action { get; set; } = new();
 }
 
@@ -82,6 +83,7 @@ public static class Profiles
             if (key is null || key.Index is < 0 or > 13 || !indices.Add(key.Index))
                 throw new ArgumentException("LCD key indices must be unique, 0–13.");
             Label(key.Label);
+            IconReferences.Validate(key.Icon);
             if (key.Background is null || !Regex.IsMatch(key.Background, "^#[0-9a-fA-F]{6}$"))
                 throw new ArgumentException($"Key {key.Index}: background must be #RRGGBB.");
             ValidateAction(key.Action);

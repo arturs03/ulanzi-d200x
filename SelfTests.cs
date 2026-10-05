@@ -50,6 +50,14 @@ public static class SelfTests
         using var archive = new ZipArchive(new MemoryStream(rebuilt));
         Check(archive.GetEntry("manifest.json") != null && archive.Entries.Count(x => x.FullName.EndsWith(".png")) == 14, "complete diagnostic page");
         var png = TestIcon.Render(3);
+        Check(IconReferences.InspectPng(png) == (196, 196), "PNG dimensions checked before decoding");
+        var invalidPng = png.ToArray(); BinaryPrimitives.WriteInt32BigEndian(invalidPng.AsSpan(16), 4096);
+        try { IconReferences.InspectPng(invalidPng); throw new Exception("Oversized image accepted."); }
+        catch (ArgumentException) { checks++; }
+        try { IconReferences.InspectPng(new byte[IconReferences.MaximumPngBytes + 1]); throw new Exception("Oversized PNG bytes accepted."); }
+        catch (ArgumentException) { checks++; }
+        try { IconReferences.InspectPng(new byte[12]); throw new Exception("Truncated PNG accepted."); }
+        catch (ArgumentException) { checks++; }
         Check(png.AsSpan(0, 8).SequenceEqual(new byte[] { 137,80,78,71,13,10,26,10 }), "PNG signature");
         Check(BinaryPrimitives.ReadInt32BigEndian(png.AsSpan(16)) == 196 && BinaryPrimitives.ReadInt32BigEndian(png.AsSpan(20)) == 196, "native icon dimensions");
         var invalid = new byte[3000];
@@ -86,6 +94,21 @@ public static class SelfTests
         Reject("""{"keys":[{"index":0,"action":{"type":"none","keys":["A"]}}]}""", "unused action fields");
         Reject("""{"keys":null}""", "null profile arrays");
         Reject("""{"sideButtons":[{"index":17}]}""", "dial mapped as side button");
+        Reject("""{"keys":[{"index":0,"icon":"../outside.png"}]}""", "icon traversal unsupported");
+        Reject("""{"keys":[{"index":0,"icon":"icons/../outside.png"}]}""", "nested icon traversal unsupported");
+        Reject("""{"keys":[{"index":0,"icon":"C:/secret.png"}]}""", "absolute icon path unsupported");
+        Reject("""{"keys":[{"index":0,"icon":"https://example.com/icon.png"}]}""", "remote icon unsupported");
+        Reject("""{"keys":[{"index":0,"icon":"builtin:unknown"}]}""", "unknown builtin icon unsupported");
+        var iconProfile = Profiles.Parse("""{"keys":[{"index":0,"icon":"builtin:screenshot"},{"index":13,"icon":"icons/custom-icon.png"}]}""");
+        Check(iconProfile.Keys[1].Icon == "icons/custom-icon.png", "portable custom icon reference accepted");
+        var iconEdited = ProfileEditing.Update(iconProfile, 0, "press", "Screenshot", "#102038", new DeckAction());
+        Check(iconEdited.Keys[0].Icon == "builtin:screenshot", "action edits preserve existing icon");
+        iconEdited = ProfileEditing.Update(iconProfile, 0, "press", "Screenshot", "#102038", new DeckAction(), new KeyAppearance(null));
+        Check(iconEdited.Keys[0].Icon is null && iconProfile.Keys[0].Icon == "builtin:screenshot", "explicit icon removal preserves original profile");
+        foreach (var preset in ActionPresets.All) { ActionCatalog.Default.Validate(preset.CreateAction()); IconReferences.Validate(preset.Icon); }
+        Check(ActionPresets.All.First(p => p.Label == "Screenshot").Keys.SequenceEqual(new[] { "Win", "Shift", "S" })
+            && ActionPresets.All.First(p => p.Label == "Record").Keys.SequenceEqual(new[] { "Win", "Shift", "R" }), "capture presets preserve Windows region shortcuts");
+        Check(IconReferences.BuiltIns.Select(i => i.Id).Distinct().Count() == IconReferences.BuiltIns.Count, "builtin icon IDs unique");
         async Task CheckKeepAwake()
         {
             using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(2));

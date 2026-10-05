@@ -12,8 +12,9 @@ internal static class Program
             Directory.CreateDirectory(fixtureDirectory);
             var starter = Path.Combine(AppContext.BaseDirectory, "profiles", "starter.json");
             File.Copy(starter, Path.Combine(fixtureDirectory, "profile.json"), true);
+            IconChecks.Run(fixtureDirectory);
             var profile = Profiles.Parse(File.ReadAllText(starter));
-            var bundle = ProfileImages.Bundle(profile);
+            var bundle = ProfileImages.Bundle(profile, fixtureDirectory);
             if (!Protocol.CleanBoundaries(bundle)) throw new IOException("Invalid profile display bundle.");
             using (var zip = new System.IO.Compression.ZipArchive(new MemoryStream(bundle)))
             {
@@ -38,6 +39,7 @@ internal static class Program
             Application.DoEvents();
             Capture("ui-check.png");
             form.CheckEditor();
+            form.CheckProfileImport();
             Application.DoEvents();
             form.PerformLayout();
             File.WriteAllText(Path.Combine(AppContext.BaseDirectory, "ui-check-layout.txt"), $"DPI {form.DeviceDpi}; size {form.ClientSize}; scaling {form.AutoScaleDimensions}");

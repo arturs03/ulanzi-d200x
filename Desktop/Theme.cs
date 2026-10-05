@@ -68,7 +68,7 @@ internal sealed class ModernSelect : ModernButton
     }
     public object? SelectedItem { get => selectedIndex >= 0 && selectedIndex < Items.Count ? Items[selectedIndex] : null; set => SelectedIndex = value is null ? -1 : Items.IndexOf(value); }
     public ModernSelect() { Height = 34; TextAlign = ContentAlignment.MiddleLeft; AccessibleRole = AccessibleRole.ComboBox; }
-    static string Caption(object item) => item is ActionDescriptor descriptor ? descriptor.Title : item.ToString() ?? "";
+    static string Caption(object item) => item switch { ActionDescriptor descriptor => descriptor.Title, ActionPreset preset => preset.Title, IconDescriptor icon => icon.Title, _ => item.ToString() ?? "" };
     protected override void OnClick(EventArgs e)
     {
         base.OnClick(e);
@@ -171,6 +171,7 @@ internal sealed class DeckTile : Button
     public string Detail { get; set; } = "Unassigned";
     public Color Stripe { get; set; } = Theme.Accent;
     public bool Selected { get; set; }
+    public Bitmap? IconImage { get; private set; }
     bool hover;
     public DeckTile()
     {
@@ -180,6 +181,8 @@ internal sealed class DeckTile : Button
     }
     protected override void OnMouseEnter(EventArgs e) { hover = true; Invalidate(); base.OnMouseEnter(e); }
     protected override void OnMouseLeave(EventArgs e) { hover = false; Invalidate(); base.OnMouseLeave(e); }
+    public void SetIcon(Bitmap? image) { var previous = IconImage; IconImage = image; previous?.Dispose(); Invalidate(); }
+    protected override void Dispose(bool disposing) { if (disposing) { IconImage?.Dispose(); IconImage = null; } base.Dispose(disposing); }
     protected override void OnPaint(PaintEventArgs e)
     {
         e.Graphics.Clear(Theme.Surface); e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
@@ -190,7 +193,14 @@ internal sealed class DeckTile : Button
         using var small = new Font("Segoe UI", 8.5f); using var title = new Font("Segoe UI", 10.5f, FontStyle.Bold);
         using var stripe = new SolidBrush(Stripe); e.Graphics.FillRectangle(stripe, 12, 14, 3, 12);
         TextRenderer.DrawText(e.Graphics, Index.ToString("D2"), small, new Rectangle(21, 10, Width - 30, 21), Theme.Muted, TextFormatFlags.Left);
-        TextRenderer.DrawText(e.Graphics, Caption, title, new Rectangle(12, Height / 2 - 9, Width - 24, 25), Theme.Text, TextFormatFlags.HorizontalCenter | TextFormatFlags.EndEllipsis);
+        if (IconImage is not null)
+        {
+            var size = Math.Max(24, Math.Min(36 * DeviceDpi / 96, Height - 64));
+            e.Graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
+            e.Graphics.DrawImage(IconImage, new Rectangle(12, (Height - size) / 2, size, size));
+        }
+        var captionLeft = IconImage is null ? 12 : Math.Max(24, Math.Min(36 * DeviceDpi / 96, Height - 64)) + 22;
+        TextRenderer.DrawText(e.Graphics, Caption, title, new Rectangle(captionLeft, Height / 2 - 9, Width - captionLeft - 12, 25), Theme.Text, TextFormatFlags.HorizontalCenter | TextFormatFlags.EndEllipsis);
         TextRenderer.DrawText(e.Graphics, Detail, small, new Rectangle(9, Height - 28, Width - 18, 20), Theme.Muted, TextFormatFlags.HorizontalCenter | TextFormatFlags.EndEllipsis);
         AccessibleName = $"Control {Index}: {Caption}, {Detail}";
     }

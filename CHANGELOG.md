@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.0-preview.5
+
+- Assign built-in icons or import local PNGs for LCD keys. Icons appear in the preview and in explicit device page uploads, including the wide Key 13. Missing/invalid custom icons fail page preparation before USB writes.
+- Add quick presets for screenshot selection, Snipping Tool region recording, Game Bar app recording, Discord mute and audio controls. These reuse validated shortcuts; selection/saving does not execute them.
+- Add Load profile with validation, a previous-profile backup, action execution disabled on import and portable custom icon copying.
+- Include the recreated Studio layout draft with confirmed Discord mute, proposed screenshot/recording slots and visibly unavailable live widgets. Quotes, sensors, FPS and horn playback remain separate pending integrations.
+- Bound PNG input to 2 MB and 1024 pixels per side, normalize imports to at most 512 pixels, reject external/traversal icon references and directory links, and keep decoding/rendering on CPU/GDI.
+
+All 72 hardware-free checks pass, along with isolated PNG/editor/profile-import checks and standard/compact UI rendering. Physical icon display and capture-shortcut delivery need user testing. No screen recording is started during verification.
+
 ## 0.1.0-preview.4
 
 - Minimal dark desktop layout with rounded controls, a clickable deck, dials/side buttons, clearer listening/keep-awake status and an activity area.

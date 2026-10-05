@@ -20,6 +20,10 @@ internal sealed partial class MainForm
     readonly Label editorTitle = Theme.Label("Button 00", 17, bold: true);
     readonly TextBox labelInput = Theme.Input();
     readonly TextBox colorInput = Theme.Input();
+    readonly ModernSelect presetInput = Theme.Select();
+    readonly ModernSelect iconInput = Theme.Select();
+    readonly Label iconCaption = Theme.Label("Icon", 9, Theme.Muted);
+    readonly FlowLayoutPanel iconTools = new() { Width = 242, Height = 38, WrapContents = false, Margin = new Padding(0, 0, 0, 12), BackColor = Theme.Surface };
     readonly Label labelCaption = Theme.Label("Label", 9, Theme.Muted);
     readonly Label colorCaption = Theme.Label("Display color", 9, Theme.Muted);
     readonly Label gestureCaption = Theme.Label("Trigger", 9, Theme.Muted);
@@ -104,8 +108,13 @@ internal sealed partial class MainForm
         inspectorLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 48)); inspectorLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 48));
         inspectorLayout.Controls.Add(editorTitle, 0, 0);
         var fields = Stack(); fields.Dock = DockStyle.Fill; fields.AutoScroll = true; fields.BackColor = Theme.Surface;
+        AddField(fields, "Quick setup", presetInput);
+        presetInput.Items.Add("Choose a preset…"); foreach (var preset in ActionPresets.All) presetInput.Items.Add(preset);
         fields.Controls.Add(labelCaption); fields.Controls.Add(labelInput); labelInput.MaxLength = 64;
         fields.Controls.Add(colorCaption); fields.Controls.Add(colorInput); colorInput.MaxLength = 7;
+        fields.Controls.Add(iconCaption);
+        iconInput.Width = 138; iconInput.Margin = new Padding(0, 0, 8, 0);
+        var importIcon = Button("PNG…", ImportIcon, 94); iconTools.Controls.AddRange([iconInput, importIcon]); fields.Controls.Add(iconTools);
         fields.Controls.Add(gestureCaption); fields.Controls.Add(gestureInput);
         AddField(fields, "Action", actionInput);
         actionInput.DisplayMember = nameof(ActionDescriptor.Title);
@@ -123,7 +132,7 @@ internal sealed partial class MainForm
         activityLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 46)); activityLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         var tools = new FlowLayoutPanel { Dock = DockStyle.Fill, WrapContents = false, BackColor = Theme.Surface };
         var activityTitle = Theme.Label("Activity", 11, bold: true); activityTitle.Margin = new Padding(0, 8, 18, 0); tools.Controls.Add(activityTitle);
-        tools.Controls.AddRange([Button("Edit JSON", () => OpenText(ProfilePath), 98), Button("Reload", ReloadProfile, 80),
+        tools.Controls.AddRange([Button("Load profile…", LoadProfile, 124), Button("Edit JSON", () => OpenText(ProfilePath), 98), Button("Reload", ReloadProfile, 80),
             Button("Profile folder", () => Process.Start(new ProcessStartInfo(profileDirectory) { UseShellExecute = true }), 112),
             Button("LLM guide", () => OpenText(Path.Combine(AppContext.BaseDirectory, "docs", "customization.md")), 100)]);
         activityLayout.Controls.Add(tools, 0, 0); activityLayout.Controls.Add(log, 0, 1); activity.Controls.Add(activityLayout); root.Controls.Add(activity, 0, 3);
@@ -131,6 +140,7 @@ internal sealed partial class MainForm
         ResumeLayout(performLayout: false);
 
         actionInput.SelectedIndexChanged += (_, _) => { if (!loadingEditor) ConfigureActionField(clear: true); };
+        presetInput.SelectedIndexChanged += (_, _) => { if (!loadingEditor && presetInput.SelectedItem is ActionPreset preset) ApplyPreset(preset); };
         gestureInput.SelectedIndexChanged += (_, _) => { if (!loadingEditor) LoadEditorAction(); };
         browse.Click += (_, _) =>
         {
@@ -169,6 +179,9 @@ internal sealed partial class MainForm
                 var key = profile.Keys.FirstOrDefault(k => k.Index == index) ?? new KeyConfig { Index = index };
                 tile.Caption = string.IsNullOrEmpty(key.Label) ? $"Key {index:D2}" : key.Label;
                 tile.Detail = ActionCatalog.Default.Describe(key.Action.Type).Title; tile.Stripe = ColorTranslator.FromHtml(key.Background);
+                try { tile.SetIcon(key.Icon is null ? null : IconStore.Load(key.Icon, profileDirectory)); }
+                catch (Exception error) when (error is IOException or ArgumentException or UnauthorizedAccessException or System.Runtime.InteropServices.ExternalException)
+                { tile.SetIcon(null); Log($"Icon unavailable for key {index}: {error.Message}"); }
             }
             else if (index >= 17)
             {
@@ -191,14 +204,17 @@ internal sealed partial class MainForm
         try
         {
             selectedIndex = index;
+            presetInput.SelectedIndex = 0;
             foreach (var tile in tiles.Values) { tile.Selected = tile.Index == index; tile.Invalidate(); }
             editorTitle.Text = index <= 13 ? $"Button {index:D2}" : index >= 17 ? $"Dial {index - 16}" : $"Side button {index - 14}";
             labelInput.Enabled = index is not (15 or 16); colorInput.Enabled = index <= 13;
             labelInput.Visible = labelCaption.Visible = index is not (15 or 16);
             colorInput.Visible = colorCaption.Visible = index <= 13;
+            iconTools.Visible = iconCaption.Visible = index <= 13;
             gestureInput.Visible = gestureCaption.Visible = index >= 17;
             labelInput.Text = index <= 13 ? profile.Keys.FirstOrDefault(k => k.Index == index)?.Label ?? "" : profile.Dials.FirstOrDefault(d => d.Index == index)?.Label ?? "";
             colorInput.Text = index <= 13 ? profile.Keys.FirstOrDefault(k => k.Index == index)?.Background ?? "#102038" : "";
+            SelectIcon(index <= 13 ? profile.Keys.FirstOrDefault(k => k.Index == index)?.Icon : null);
             gestureInput.Items.Clear();
             gestureInput.Items.AddRange(index >= 17 ? ["Turn left", "Turn right", "Press"] : ["Press"]);
             gestureInput.SelectedIndex = 0; gestureInput.Enabled = index >= 17;
@@ -250,7 +266,8 @@ internal sealed partial class MainForm
             if (new FileInfo(ProfilePath).Length > 1_048_576) throw new IOException("Profile exceeds 1 MB.");
             var originalJson = File.ReadAllText(ProfilePath);
             var current = Profiles.Parse(originalJson);
-            var candidate = ProfileEditing.Update(current, selectedIndex, Gesture, labelInput.Text, colorInput.Text, action);
+            var candidate = ProfileEditing.Update(current, selectedIndex, Gesture, labelInput.Text, colorInput.Text, action,
+                selectedIndex <= 13 ? new KeyAppearance((iconInput.SelectedItem as IconDescriptor)?.Id is { Length: > 0 } iconId ? iconId : null) : null);
             var temporary = Path.Combine(profileDirectory, $".profile-{Guid.NewGuid():N}.tmp");
             try
             {
@@ -265,6 +282,69 @@ internal sealed partial class MainForm
             Log($"Saved {descriptor.Title} for control {selectedIndex}, {Gesture}. Device display unchanged.");
         }
         catch (Exception error) { editorFeedback.ForeColor = Color.FromArgb(255, 159, 159); editorFeedback.Text = error.Message; Log($"Mapping rejected: {error.Message}"); }
+    }
+
+    void SelectIcon(string? reference)
+    {
+        iconInput.Items.Clear(); iconInput.Items.Add(new IconDescriptor("", "No icon"));
+        foreach (var icon in IconReferences.BuiltIns) iconInput.Items.Add(icon);
+        if (reference is not null && !IconReferences.BuiltIns.Any(icon => icon.Id == reference)) iconInput.Items.Add(new IconDescriptor(reference, "Custom PNG"));
+        iconInput.SelectedItem = iconInput.Items.Cast<IconDescriptor>().Single(icon => icon.Id == (reference ?? ""));
+    }
+
+    void ImportIcon()
+    {
+        using var picker = new OpenFileDialog { Filter = "PNG icons (*.png)|*.png", CheckFileExists = true, Title = "Choose an icon (up to 2 MB, 1024 × 1024)" };
+        if (picker.ShowDialog(this) != DialogResult.OK) return;
+        var reference = IconStore.Import(picker.FileName, profileDirectory); SelectIcon(reference);
+        editorFeedback.ForeColor = Theme.Muted; editorFeedback.Text = "Icon imported. Save mapping, then Send to device.";
+    }
+
+    void LoadProfile()
+    {
+        using var picker = new OpenFileDialog { Filter = "D200X profiles (*.json)|*.json", CheckFileExists = true,
+            InitialDirectory = Path.Combine(AppContext.BaseDirectory, "profiles"), Title = "Load a profile" };
+        if (picker.ShowDialog(this) == DialogResult.OK) ImportProfile(picker.FileName);
+    }
+
+    internal void ImportProfile(string sourcePath)
+    {
+        if (!Path.IsPathFullyQualified(sourcePath) || sourcePath.StartsWith(@"\\")) throw new IOException("Choose a local JSON profile.");
+        if (new FileInfo(sourcePath).Length > 1_048_576) throw new IOException("Profile exceeds 1 MB.");
+        var candidate = Profiles.Parse(File.ReadAllText(sourcePath));
+        var sourceDirectory = Path.GetDirectoryName(Path.GetFullPath(sourcePath))!;
+        var customIcons = candidate.Keys.Select(k => k.Icon).Where(icon => icon is not null && !icon.StartsWith("builtin:", StringComparison.Ordinal)).Distinct().ToArray();
+        // Validate every source image before persisting an imported profile.
+        foreach (var reference in customIcons) { using var image = IconStore.Load(reference!, sourceDirectory); }
+        var imported = new Dictionary<string, string>();
+        foreach (var reference in customIcons) imported.Add(reference!, IconStore.Import(Path.Combine(sourceDirectory, reference!.Replace('/', Path.DirectorySeparatorChar)), profileDirectory));
+        foreach (var key in candidate.Keys) if (key.Icon is not null && imported.TryGetValue(key.Icon, out var reference)) key.Icon = reference;
+        Profiles.Validate(candidate);
+        var temporary = Path.Combine(profileDirectory, $".profile-{Guid.NewGuid():N}.tmp");
+        try
+        {
+            File.WriteAllText(temporary, JsonSerializer.Serialize(candidate, Profiles.JsonOptions));
+            File.Copy(ProfilePath, Path.Combine(profileDirectory, "profile.previous.json"), overwrite: true);
+            File.Move(temporary, ProfilePath, overwrite: true);
+        }
+        finally { if (File.Exists(temporary)) File.Delete(temporary); }
+        actions.Checked = false; ReloadProfile();
+        editorFeedback.ForeColor = Theme.Success; editorFeedback.Text = "Profile loaded. Previous profile backed up. Stop and Send to device to update its page.";
+        Log("Profile imported; actions disabled. Display transfer remains explicit.");
+    }
+
+    void ApplyPreset(ActionPreset preset)
+    {
+        loadingEditor = true;
+        try
+        {
+            actionInput.SelectedItem = actionInput.Items.Cast<ActionDescriptor>().Single(d => d.Id == "hotkey");
+            ConfigureActionField(clear: false); valueInput.Text = string.Join(" + ", preset.Keys);
+            if (labelInput.Enabled) labelInput.Text = preset.Label;
+            if (selectedIndex <= 13) SelectIcon(preset.Icon);
+            editorFeedback.ForeColor = Theme.Muted; editorFeedback.Text = "Preset selected. Save mapping to keep it. Nothing has run.";
+        }
+        finally { loadingEditor = false; }
     }
 
     // Used only with --ui-check's isolated profile directory; no USB or action execution.
@@ -286,11 +366,37 @@ internal sealed partial class MainForm
         SetBusy(true);
         if (start.Visible || !stop.Visible || keepAwake.Enabled || sendPage.Enabled) throw new IOException("Running-session controls are inconsistent.");
         SetBusy(false);
+        SelectControl(0); ApplyPreset(ActionPresets.All.Single(p => p.Label == "Screenshot")); SaveMapping();
+        var screenshot = Profiles.Parse(File.ReadAllText(ProfilePath)).Keys.Single(k => k.Index == 0);
+        if (screenshot.Icon != "builtin:screenshot" || !screenshot.Action.Keys.SequenceEqual(new[] { "Win", "Shift", "S" })) throw new IOException("Capture preset editor failed.");
+        SelectControl(4); ApplyPreset(ActionPresets.All.Single(p => p.Label == "Record")); SaveMapping();
+        SelectControl(0);
     }
 
     internal void CheckCompactLayout()
     {
         if (grid.Height < 210 * DeviceDpi / 96 || tiles.Values.Any(tile => tile.Height < 60 * DeviceDpi / 96))
             throw new IOException("Compact layout collapsed physical control cards.");
+    }
+
+    internal void CheckProfileImport()
+    {
+        var original = File.ReadAllText(ProfilePath);
+        var sourceDirectory = Path.Combine(profileDirectory, "import-check");
+        Directory.CreateDirectory(Path.Combine(sourceDirectory, "icons"));
+        File.WriteAllBytes(Path.Combine(sourceDirectory, "icons", "custom.png"), TestIcon.Render(1));
+        var candidate = Profiles.Parse(original); candidate.Name = "Imported test"; candidate.Keys[0].Icon = "icons/custom.png";
+        var sourcePath = Path.Combine(sourceDirectory, "profile.json");
+        File.WriteAllText(sourcePath, JsonSerializer.Serialize(candidate, Profiles.JsonOptions));
+        ImportProfile(sourcePath);
+        var importedJson = File.ReadAllText(ProfilePath); var imported = Profiles.Parse(importedJson);
+        if (imported.Name != "Imported test" || imported.Keys[0].Icon?.StartsWith("icons/imported-") != true
+            || File.ReadAllText(Path.Combine(profileDirectory, "profile.previous.json")) != original || actions.Checked)
+            throw new IOException("Profile import or backup failed.");
+        using (var icon = IconStore.Load(imported.Keys[0].Icon!, profileDirectory)) { }
+        File.WriteAllText(sourcePath, "{\"schemaVersion\":999}");
+        try { ImportProfile(sourcePath); throw new IOException("Invalid imported profile accepted."); }
+        catch (ArgumentException) { if (File.ReadAllText(ProfilePath) != importedJson) throw new IOException("Invalid import changed the active profile."); }
+        File.WriteAllText(ProfilePath, original); ReloadProfile();
     }
 }

@@ -176,7 +176,7 @@ internal sealed partial class MainForm : Form
             sessionTask = Task.Run(async () =>
             {
                 // Build and validate the entire bundle before opening the writable device.
-                var bundle = ProfileImages.Bundle(snapshot);
+                var bundle = ProfileImages.Bundle(snapshot, profileDirectory);
                 using var stream = HidDevice.Open(device, true);
                 foreach (var packet in Protocol.DisplayPackets(bundle))
                     await stream.WriteAsync(Protocol.WindowsReport(packet), token);

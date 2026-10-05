@@ -7,7 +7,7 @@ namespace D200xDirect.App;
 
 internal static class ProfileImages
 {
-    public static byte[] Render(KeyConfig key)
+    public static byte[] Render(KeyConfig key, string? profileDirectory = null)
     {
         // The firmware stretches key 13's 196x196 PNG across its 392x196 screen.
         // Compose at the physical aspect ratio, then squeeze only the encoded image.
@@ -17,7 +17,17 @@ internal static class ProfileImages
         graphics.Clear(ColorTranslator.FromHtml(key.Background));
         using var font = new Font("Segoe UI", 22, FontStyle.Bold, GraphicsUnit.Pixel);
         using var format = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center, Trimming = StringTrimming.EllipsisWord };
-        graphics.DrawString(key.Label, font, Brushes.White, new RectangleF(10, 10, width - 20, 150), format);
+        if (key.Icon is null) graphics.DrawString(key.Label, font, Brushes.White, new RectangleF(10, 10, width - 20, 150), format);
+        else
+        {
+            using var icon = IconStore.Load(key.Icon, profileDirectory);
+            var box = width == 196 ? new RectangleF(44, 10, 108, 108) : new RectangleF(16, 26, 128, 128);
+            var factor = Math.Min(box.Width / icon.Width, box.Height / icon.Height);
+            var target = new RectangleF(box.X + (box.Width - icon.Width * factor) / 2, box.Y + (box.Height - icon.Height * factor) / 2, icon.Width * factor, icon.Height * factor);
+            graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic; graphics.DrawImage(icon, target);
+            using var labelFont = new Font("Segoe UI", 18, FontStyle.Bold, GraphicsUnit.Pixel);
+            graphics.DrawString(key.Label, labelFont, Brushes.White, width == 196 ? new RectangleF(10, 120, 176, 42) : new RectangleF(154, 12, width - 166, 142), format);
+        }
         using var numberFont = new Font("Segoe UI", 12, FontStyle.Regular, GraphicsUnit.Pixel);
         graphics.DrawString(key.Index.ToString("D2"), numberFont, Brushes.LightGray, new RectangleF(10, 164, width - 20, 22), format);
         using var output = new MemoryStream();
@@ -33,11 +43,11 @@ internal static class ProfileImages
         return output.ToArray();
     }
 
-    public static byte[] Bundle(DeckProfile profile)
+    public static byte[] Bundle(DeckProfile profile, string? profileDirectory = null)
     {
         var images = Enumerable.Range(0, 14).Select(i =>
             (Key: profile.Keys.FirstOrDefault(k => k.Index == i) ?? new KeyConfig { Index = i }, Name: $"icons/key-{i}.png"))
-            .Select(item => (item.Key, item.Name, Bytes: Render(item.Key))).ToArray();
+            .Select(item => (item.Key, item.Name, Bytes: Render(item.Key, profileDirectory))).ToArray();
         for (var padding = 0; padding < 256; padding++)
         {
             using var memory = new MemoryStream();

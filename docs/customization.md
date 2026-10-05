@@ -24,6 +24,7 @@ For example: “Make key 0 open my favorite website, label it Web with a blue ba
 - `name`: a name with 1–80 characters.
 - `keys`: up to 14 entries, each with a unique `index` (0–13), `label`, `background` and `action`. Missing keys are blank and inactive.
 - Key 13 is the double-width screen. The app selects image mode when sending a page so its firmware clock/gauges do not overlap the configured label. Its image and app preview use the wide aspect ratio.
+- `icon` is optional on LCD keys. Use `builtin:screenshot`, `builtin:record`, `builtin:microphone`, `builtin:application`, `builtin:gamepad`, `builtin:website`, `builtin:market`, `builtin:temperature`, `builtin:usage`, or `builtin:horn`. A custom icon uses `icons/filename.png` relative to the profile folder. Import it through the app's PNG button, or provide that folder with a shared profile. Do not invent a file reference, use absolute paths, or add remote image URLs. Omit `icon` for text-only keys. Icons are independent of actions: a horn icon alone does not play a sound.
 - `dials`: up to three entries, each with a unique `index` (17–19), `label` and `left`, `right`, `press` actions. Dial labels are shown in the JSON; custom dial-area display is not implemented.
 - `sideButtons`: up to two entries, each with a unique `index` (15 or 16) and `action`.
 
@@ -66,4 +67,8 @@ Profiles are plain text: avoid storing passwords, tokens or personal secrets in 
 
 ## Current limits
 
-This preview supports one profile at a time. Dynamic sensors, custom image files, multiple pages, automatic reconnect, custom dial-area images and automatic startup are not implemented. Physical indices, actions and display behavior still require validation on the D200X; automated checks alone do not establish device operation.
+The editor's **Quick setup** presets fill a label, icon and shortcut; **Save mapping** persists them. Screenshot region uses Win+Shift+S; recording region uses Win+Shift+R to open Snipping Tool, where you choose a region and start recording. Game Bar app recording uses Win+Alt+R as a separate preset. These are Windows shortcuts, not an embedded capture engine. They depend on the installed Windows tool and its settings. Actual shortcut delivery needs physical testing.
+
+**Load profile** can import a local JSON file, copy validated custom PNGs into the profile's icons folder, and back up the previous profile as `profile.previous.json`. It disables Run actions and does not upload a page. Stop listening and explicitly Send to device to display the imported page. PNGs must be at most 2 MB and 1024 pixels per side; imports are normalized to at most 512 pixels.
+
+This preview supports one active profile at a time, built-in/custom PNG key icons and profile import. Dynamic sensors, multiple device pages, automatic reconnect, custom dial-area images and automatic startup are not implemented. Physical actions, icon display and lifecycle still require validation on the D200X; automated checks alone do not establish device operation.

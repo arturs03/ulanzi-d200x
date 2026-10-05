@@ -6,7 +6,7 @@ public static class ProfileEditing
 {
     // Return a validated copy. A rejected edit must never mutate live mappings.
     public static DeckProfile Update(DeckProfile original, int index, string gesture,
-        string label, string background, DeckAction action)
+        string label, string background, DeckAction action, KeyAppearance? appearance = null)
     {
         var copy = Profiles.Parse(JsonSerializer.Serialize(original, Profiles.JsonOptions));
         var copiedAction = JsonSerializer.Deserialize<DeckAction>(JsonSerializer.Serialize(action, Profiles.JsonOptions), Profiles.JsonOptions)!;
@@ -15,6 +15,7 @@ public static class ProfileEditing
             var key = copy.Keys.FirstOrDefault(k => k.Index == index);
             if (key is null) { key = new KeyConfig { Index = index }; copy.Keys.Add(key); }
             key.Label = label; key.Background = background; key.Action = copiedAction;
+            if (appearance is not null) key.Icon = appearance.Icon;
         }
         else if (index is 15 or 16 && gesture == "press")
         {

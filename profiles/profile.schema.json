@@ -40,6 +40,11 @@
           },
           "action": {
             "$ref": "#/$defs/action"
+          },
+          "icon": {
+            "type": "string",
+            "pattern": "^(builtin:(screenshot|record|microphone|application|gamepad|website|market|temperature|usage|horn)|icons/[A-Za-z0-9][A-Za-z0-9_-]{0,95}\\.png)$",
+            "description": "Built-in icon or a PNG stored relative to the profile directory. Import through the app."
           }
         }
       }

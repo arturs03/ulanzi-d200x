@@ -50,6 +50,10 @@ The catalog validates again at execution and rejects pre-cancelled calls before 
 
 These use existing capabilities and do not require an integration server. Discord mute/deafen can use configured Discord shortcuts; specific soundboard triggering still needs investigation. Monitoring/display updates are a separate feature from action execution.
 
+Preview 5 adds `ActionPresets.All`: reusable hotkey configurations for screenshots (Win+Shift+S), Snipping Tool region recording (Win+Shift+R), Game Bar app recording (Win+Alt+R), Discord mute and audio controls. Presets fill the editor; choosing or saving one does not execute it. Region recording opens Windows capture controls and requires region selection/start. A preset does not add a new module or API capability.
+
+LCD-key icons are separate display metadata: `KeyConfig.Icon` accepts a supported `builtin:` ID or `icons/filename.png` relative to the profile directory. `IconReferences` defines the validated contract; `Desktop/IconStore.cs` imports and renders PNG assets. `ProfileEditing.Update` accepts optional `KeyAppearance` to set/remove an icon while preserving unrelated mappings. Icons are rendered into the page only on an explicit upload; they do not execute actions or provide live widget data.
+
 ## Adding an integration
 
 1. Define a stable action ID and explicit configuration, permissions, side effects and error behavior. Keep secrets outside profiles; document only a secure reference. Do not use arbitrary command strings as an integration API.

@@ -13,6 +13,7 @@ Current safeguards:
 - The optional Keep awake toggle defaults off. When explicitly selected after a page transfer, an active session sends at most one small image-mode/time update every 5 seconds, with a 3-second write deadline. Failure on either the reader or writer cancels both; there are no write retries. This adds no telemetry polling or repeated ZIP uploads. The user confirmed idle prevention in a session; extended duration and possible flicker remain unverified.
 - Preview 4 uses CPU/GDI drawing for its dark interface. The action editor validates a copy before replacing the saved profile and never executes a mapping on save. Execution uses the same module validation and honors cancellation before entering Windows capability calls. Modules are compiled app code, not a sandbox for arbitrary third-party code; see docs/actions-api.md.
 - I/O failures stop the device session. Action errors are reported separately. Physical recovery remains unverified.
+- Preview 5 bounds PNG files to 2 MB and dimensions to 1024 pixels before native decoding, normalizes imports to at most 512 pixels per side, rejects remote/traversal references and linked icon directories/files, and renders icons on CPU/GDI. Every page image is prepared before opening the writable device. Profile imports validate configuration/assets, back up the previous profile and disable actions. Capture presets use Windows shortcuts only; automated checks never start captures.
 
 Validation still required:
 

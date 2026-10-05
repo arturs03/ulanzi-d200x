@@ -6,7 +6,7 @@ An independent Windows app for controlling a **Ulanzi D200X** directly over USB,
 
 ## Install
 
-Download `D200X-Direct-0.1.0-preview.4-win-x64-Setup.exe` from the project's release artifacts and choose **Install / Update**. Close the app through its tray menu before updating; saved profiles are preserved. Open **D200X Direct** from the Windows Start menu. The executable bundles .NET, so end users do not need to install a runtime separately. Preview builds are not code signed.
+Download `D200X-Direct-0.1.0-preview.5-win-x64-Setup.exe` from the project's release artifacts and choose **Install / Update**. Close the app through its tray menu before updating; saved profiles are preserved. Open **D200X Direct** from the Windows Start menu. The executable bundles .NET, so end users do not need to install a runtime separately. Preview builds are not code signed.
 
 Target: Windows x64 supported by .NET 8, with a D200X connected by a data-capable USB cable. Only D200X is targeted; other Ulanzi models and Windows ARM64/x86 are not tested. No administrator access, driver replacement, service or automatic startup is installed.
 
@@ -25,15 +25,19 @@ If the device returns to its stock screen after about one minute, send the profi
 
 ## Edit controls in the app
 
-The dark desktop interface has a clickable deck and an action inspector. Select a key, dial or side button, edit its mapping, then choose **Save mapping**. For a dial, choose Turn left, Turn right or Press before editing. Key labels/colors update on the physical display only when you explicitly **Send to device** while stopped. Changes are saved to the same JSON profile used by LLM customization; invalid edits leave the saved profile intact. The app's **Run actions** toggle controls execution.
+The dark desktop interface has a clickable deck and an action inspector. Select a key, dial or side button, edit its mapping, then choose **Save mapping**. Quick setup fills common screenshot, recording, mute and audio mappings. Choose a built-in icon or use PNG… to import an image for an LCD key. Load profile imports a local profile, copies its custom PNGs and backs up your previous profile; actions stay disabled until enabled. For a dial, choose Turn left, Turn right or Press before editing. Key labels/colors/icons update on the physical display only when you explicitly **Send to device** while stopped. Changes are saved to the same JSON profile used by LLM customization; invalid edits leave the saved profile intact. The app's **Run actions** toggle controls execution.
 
 The shared [action module API](docs/actions-api.md) provides descriptors, validation and handlers for existing actions, with documented extension points for future integrations. It does not run arbitrary downloaded modules or expose a network server.
 
 ## Customize with an LLM
 
+Screenshot region uses Win+Shift+S; region recording uses Win+Shift+R to open Snipping Tool, where you select the region and start recording. A separate Game Bar preset uses Win+Alt+R for a supported app/game. These reuse the installed Windows tools. See [Microsoft Snipping Tool documentation](https://support.microsoft.com/en-gb/windows/apps/use-snipping-tool-to-capture-screenshots) and [Game Bar recording documentation](https://support.microsoft.com/en-gb/accessibility/windows/use-a-screen-reader-to-record-your-screen-with-xbox-game-bar). Physical shortcut delivery still needs testing; no capture is started during automated checks.
+
+The bundled [Studio layout draft](profiles/studio-layout.json) recreates the key positions and includes mute/capture mappings, with visibly unavailable live widgets. See [what remains](docs/studio-layout.md).
+
 Give ChatGPT, Claude, another LLM or a coding assistant your profile plus [the schema](profiles/profile.schema.json) and [customization instructions](docs/customization.md). Ask it to change the layout or actions, then save and reload the resulting JSON. A local coding assistant can edit the file directly; a regular chat can return JSON for you to paste. No recompilation is needed.
 
-Supported mappings: hotkeys/media keys, local application launches, HTTP/HTTPS links, dial left/right/press and side buttons. Labels and key background colors are configurable. Actions do not run on profile load. Arbitrary scripts, shell commands and application arguments are not supported.
+Supported mappings: hotkeys/media keys, local application launches, HTTP/HTTPS links, dial left/right/press and side buttons. Labels, key background colors and built-in/custom PNG icons are configurable. Actions do not run on profile load. Arbitrary scripts, shell commands and application arguments are not supported.
 
 [profiles/starter.json](profiles/starter.json) has inactive controls. [profiles/example.json](profiles/example.json) demonstrates a website, media playback, a Discord mute hotkey and a volume dial. Discord must have its matching keybind configured separately.
 
@@ -73,7 +77,7 @@ Stability is a core requirement: preventing application errors, black screens an
 - Physical-test evidence: all 14 keys (0–13) have press/release events; dials 17–19 turn both ways; side buttons 15–16 have press/release events. Dial presses 18/19 are confirmed; dial 17 press remains to be checked. See [hardware validation](docs/hardware-validation.md).
 - A Starter profile display transfer completed, and the user confirmed the correct physical numbered labels. Action delivery, reconnect behavior, sleep/wake and long-term reliability remain unverified.
 - Preview 1 left the built-in CPU/RAM/GPU gauges overlapping key 13. Preview 2 explicitly selects image mode during page transfer and formats key 13 as the double-width screen. The user physically confirmed its correction on preview 3. These are ordinary display commands; no firmware flashing or sensor polling is added.
-- One active profile; no dynamic sensors, custom image files, multiple pages, custom dial-area display, automatic reconnect or automatic startup yet.
+- One active profile with import/export via JSON and optional PNG files; no dynamic sensors, multiple device pages, custom dial-area display, automatic reconnect or automatic startup yet.
 - The app refuses active device access while the known Studio process runs and prevents concurrent sessions with its diagnostic CLI. Keep other third-party controllers closed too.
 - The desktop app uses standard Windows controls and CPU/GDI image generation. It does not poll AMD telemetry or initialize a browser/game rendering engine. This does not guarantee protection against GPU driver, USB, kernel or hardware failures.
 
