@@ -58,6 +58,8 @@ The diagnostic CLI remains available:
 
 ## Verification and limits
 
+Stability is a core requirement: preventing application errors, black screens and BSODs takes priority over new features. The app uses existing Windows APIs without adding a kernel driver, firmware changes, elevation or Windows security changes. These choices reduce the scope of low-level changes; they cannot guarantee that existing drivers or hardware will never fail. See [the stability criteria](docs/stability.md).
+
 - Observed D200X: VID `2207`, PID `0019`, compatible input/output reports of 1025 bytes including Windows report ID 0. The separate keyboard interface is not used.
 - Input decoding, report framing, ZIP transfer boundaries/reassembly, PNG generation, JSON validation and action selection have automated checks.
 - Physical controls, physical images, action delivery, reconnect behavior, sleep/wake and long-term reliability are not yet verified.
