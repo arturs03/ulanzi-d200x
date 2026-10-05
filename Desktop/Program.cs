@@ -44,6 +44,7 @@ internal static class Program
             Capture("ui-check-editor.png");
             form.Size = form.MinimumSize;
             Application.DoEvents();
+            form.CheckCompactLayout();
             Capture("ui-check-compact.png");
             form.Close();
             return;

@@ -45,3 +45,5 @@ The next log confirms keep-awake enabled at 11:39:17 and the first command sent 
 ## Dark UI and module API — preview 4
 
 Automated checks cover module dispatch with a fake platform, validation/cancellation before host access, duplicate-module rejection, schema-compatible serialization and edits that preserve other controls/gestures. The desktop check uses an isolated fixture profile, saves a dial mapping and Key 13 label, and verifies invalid input leaves the saved file unchanged. Rendered layouts are inspected separately. These checks send no USB packets, hotkeys or application launches. Physical action delivery and the updated UI's device lifecycle still need testing.
+
+The desktop check also saves a side-button mapping, verifies running/stopped control states and rejects compact layouts that collapse control cards. Standard and compact renders were inspected at the host's 150% scale. Smaller windows scroll the deck/editor while keeping Save mapping visible. Installer payload verification passes. Full uninstall and physical action delivery remain separate checks.

@@ -50,7 +50,9 @@ if (Test-Path -LiteralPath $payload -PathType Leaf) {
     $zip = [IO.Compression.ZipFile]::Open($payload, [IO.Compression.ZipArchiveMode]::Update)
 } else { $zip = [IO.Compression.ZipFile]::Open($payload, [IO.Compression.ZipArchiveMode]::Create) }
 try {
-    foreach ($file in Get-ChildItem -LiteralPath $appDirectory -File -Recurse) {
+    foreach ($file in Get-ChildItem -LiteralPath $appDirectory -File -Recurse | Where-Object {
+        $_.Name -notlike 'ui-check*' -and $_.FullName -notmatch '[\\/](ui-check-profile)[\\/]'
+    }) {
         $entry = $file.FullName.Substring($appDirectory.Length + 1).Replace('\', '/')
         [IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zip, $file.FullName, $entry, [IO.Compression.CompressionLevel]::Optimal) | Out-Null
     }

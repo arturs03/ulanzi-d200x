@@ -77,7 +77,12 @@ internal sealed partial class MainForm
         var body = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1, Margin = Padding.Empty };
         body.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100)); body.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 298));
         var deck = new SurfacePanel { Dock = DockStyle.Fill, Margin = new Padding(0, 0, 16, 12) };
-        var deckLayout = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 5, BackColor = Theme.Surface };
+        var deckScroll = new Panel { Dock = DockStyle.Fill, AutoScroll = true, BackColor = Theme.Surface };
+        var deckLayout = new TableLayoutPanel { Dock = DockStyle.Top, MinimumSize = new Size(0, 420), Height = 420, ColumnCount = 1, RowCount = 5, BackColor = Theme.Surface };
+        deckScroll.Resize += (_, _) =>
+        {
+            deckLayout.Height = Math.Max(deckLayout.MinimumSize.Height, deckScroll.ClientSize.Height);
+        };
         deckLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34)); deckLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 28));
         deckLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100)); deckLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 30)); deckLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 92));
         deckLayout.Controls.Add(profileName, 0, 0); deckLayout.Controls.Add(Theme.Label("YOUR DECK   /   Select a control to edit its mapping", 9, Theme.Muted), 0, 1);
@@ -91,7 +96,7 @@ internal sealed partial class MainForm
         var dialHeading = Theme.Label("DIALS & SIDE BUTTONS", 9, Theme.Muted); dialHeading.Margin = new Padding(4, 10, 0, 0); deckLayout.Controls.Add(dialHeading, 0, 3);
         var indices = new[] { 17, 18, 19, 15, 16 };
         for (var i = 0; i < indices.Length; i++) otherControls.Controls.Add(CreateTile(indices[i]), i, 0);
-        deckLayout.Controls.Add(otherControls, 0, 4); deck.Controls.Add(deckLayout); body.Controls.Add(deck, 0, 0);
+        deckLayout.Controls.Add(otherControls, 0, 4); deckScroll.Controls.Add(deckLayout); deck.Controls.Add(deckScroll); body.Controls.Add(deck, 0, 0);
 
         var inspector = new SurfacePanel { Dock = DockStyle.Fill, Margin = new Padding(0, 0, 0, 12) };
         var inspectorLayout = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 4, BackColor = Theme.Surface };
@@ -281,5 +286,11 @@ internal sealed partial class MainForm
         SetBusy(true);
         if (start.Visible || !stop.Visible || keepAwake.Enabled || sendPage.Enabled) throw new IOException("Running-session controls are inconsistent.");
         SetBusy(false);
+    }
+
+    internal void CheckCompactLayout()
+    {
+        if (grid.Height < 210 * DeviceDpi / 96 || tiles.Values.Any(tile => tile.Height < 60 * DeviceDpi / 96))
+            throw new IOException("Compact layout collapsed physical control cards.");
     }
 }
