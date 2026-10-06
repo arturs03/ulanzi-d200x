@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "D200X Direct experimental provider wire envelope v1",
+  "description": "Envelope validation is supplemented by runtime lifecycle, shape, source, range, timestamp and request-matching checks documented in plugin-protocol.md.",
+  "type": "object", "additionalProperties": false,
+  "required": ["protocolVersion", "requestId", "type"],
+  "allOf": [{ "if": { "required": ["sensorLog"] }, "then": {
+    "properties": { "type": { "const": "hello" } },
+    "not": { "anyOf": [{ "required": ["providerId"] }, { "required": ["selections"] }, { "required": ["samples"] }] }
+  } }],
+  "properties": {
+    "sensorLog": { "$ref": "#/$defs/sensorLog" },
+    "protocolVersion": { "const": 1 },
+    "requestId": { "type": "integer", "minimum": 1, "maximum": 2147483647 },
+    "type": { "enum": ["hello", "snapshot", "shutdown"] },
+    "providerId": { "oneOf": [{ "$ref": "#/$defs/id" }, { "type": "null" }] },
+    "selections": { "oneOf": [{ "type": "array", "minItems": 1, "maxItems": 64, "uniqueItems": true, "items": { "$ref": "#/$defs/selection" } }, { "type": "null" }] },
+    "samples": { "oneOf": [{ "type": "array", "minItems": 1, "maxItems": 64, "items": { "$ref": "#/$defs/sample" } }, { "type": "null" }] }
+  },
+  "$defs": {
+    "sensorLog": {
+      "description": "Optional host-private configuration in d200x.system hello requests only; never returned in responses or stored in profiles.",
+      "type": "object", "additionalProperties": false, "required": ["directory", "timeZoneId"],
+      "anyOf": [{ "required": ["cpuTemperature"] }, { "required": ["gpuTemperature"] }, { "required": ["gpuHotspot"] }, { "required": ["gpuUsage"] }],
+      "properties": {
+        "directory": { "type": "string", "minLength": 3, "maxLength": 1024 },
+        "timeZoneId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "cpuTemperature": { "type": "string", "pattern": "^/(amdcpu|intelcpu)/[0-9]{1,3}/temperature/[0-9]{1,3}$", "maxLength": 96 },
+        "gpuTemperature": { "type": "string", "pattern": "^/(nvidiagpu|atigpu)/[0-9]{1,3}/temperature/[0-9]{1,3}$", "maxLength": 96 },
+        "gpuHotspot": { "type": "string", "pattern": "^/(nvidiagpu|atigpu)/[0-9]{1,3}/temperature/[0-9]{1,3}$", "maxLength": 96 },
+        "gpuUsage": { "type": "string", "pattern": "^/(nvidiagpu|atigpu)/[0-9]{1,3}/load/[0-9]{1,3}$", "maxLength": 96 }
+      }
+    },
+    "id": { "type": "string", "maxLength": 96, "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$" },
+    "selection": {
+      "type": "object", "additionalProperties": false, "required": ["metricId", "sourceId"],
+      "properties": { "metricId": { "$ref": "#/$defs/id" }, "sourceId": { "$ref": "#/$defs/id" } }
+    },
+    "sample": {
+      "type": "object", "additionalProperties": false,
+      "required": ["metricId", "sourceId", "value", "unit", "observedAt", "status"],
+      "properties": {
+        "metricId": { "$ref": "#/$defs/id" }, "sourceId": { "$ref": "#/$defs/id" },
+        "value": { "type": ["number", "null"] }, "unit": { "enum": ["percent", "celsius", "usd", "fps"] },
+        "observedAt": { "oneOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }] },
+        "status": { "enum": ["ok", "unavailable", "error"] }, "code": { "$ref": "#/$defs/id" }
+      },
+      "allOf": [{ "if": { "properties": { "status": { "const": "ok" } } },
+        "then": { "properties": { "value": { "type": "number" }, "observedAt": { "type": "string" } } },
+        "else": { "properties": { "value": { "type": "null" }, "observedAt": { "type": "null" } } } }]
+    }
+  }
+}

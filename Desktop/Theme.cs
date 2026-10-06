@@ -53,6 +53,8 @@ internal static class Theme
 internal sealed class ModernSelect : ModernButton
 {
     int selectedIndex = -1;
+    ContextMenuStrip? dropDown;
+    internal ContextMenuStrip? DropDownForCheck => dropDown;
     public List<object> Items { get; } = [];
     public string DisplayMember { get; set; } = "";
     public event EventHandler? SelectedIndexChanged;
@@ -72,18 +74,38 @@ internal sealed class ModernSelect : ModernButton
     protected override void OnClick(EventArgs e)
     {
         base.OnClick(e);
-        var menu = new ContextMenuStrip { BackColor = Theme.Raised, ForeColor = Theme.Text, Font = Font, ShowImageMargin = false,
+        if (IsDisposed || Disposing || Items.Count == 0) return;
+        if (dropDown is { Visible: true }) { dropDown.Close(); return; }
+        // Closed runs inside ToolStrip's mouse/click dispatch. Keep the menu alive until
+        // the select is disposed, rather than destroying a window still on that stack.
+        var menu = dropDown ??= new ContextMenuStrip { BackColor = Theme.Raised, ForeColor = Theme.Text, ShowImageMargin = false,
             Renderer = new ToolStripProfessionalRenderer(new DarkMenuColors()) };
+        menu.Font = Font;
+        foreach (var previous in menu.Items.Cast<ToolStripItem>().ToArray()) previous.Dispose();
+        menu.Items.Clear();
         foreach (var item in Items)
         {
             var entry = menu.Items.Add(Caption(item)); entry.ForeColor = Theme.Text;
             entry.Click += (_, _) => SelectedItem = item;
         }
-        menu.Closed += (_, _) => menu.Dispose(); menu.Show(this, new Point(0, Height));
+        menu.Show(this, new Point(0, Height));
+    }
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing && dropDown is { } menu)
+        {
+            dropDown = null;
+            menu.Close();
+            // The owner can itself be removed by a selection handler. Dispatch final
+            // disposal on the menu's surviving handle, after its click/close returns.
+            if (menu.IsHandleCreated) menu.BeginInvoke((Action)menu.Dispose);
+            else menu.Dispose(); // Never shown: no native menu event is in progress.
+        }
+        base.Dispose(disposing);
     }
     protected override void OnKeyDown(KeyEventArgs e)
     {
-        if (e.KeyCode is Keys.Up or Keys.Down)
+        if (Items.Count > 0 && e.KeyCode is Keys.Up or Keys.Down)
         {
             SelectedIndex = Math.Clamp(selectedIndex + (e.KeyCode == Keys.Down ? 1 : -1), 0, Items.Count - 1); e.Handled = true;
         }

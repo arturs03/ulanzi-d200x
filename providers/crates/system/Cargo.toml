@@ -1,0 +1,10 @@
+[package]
+name = "d200x-system"
+version = "0.3.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+d200x-provider-protocol.workspace = true
+time.workspace = true

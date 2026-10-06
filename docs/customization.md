@@ -4,9 +4,9 @@ The app stores your editable profile at `%APPDATA%\D200XDirect\profile.json`. Cl
 
 Click **Reload file** after saving. Invalid profiles are rejected and the last valid mappings remain active. Reloading never changes the device display: stop listening, then click **Update screens** explicitly. Confirm the actual image on the D200X. Fully exit Studio before using the device from this app.
 
-The app starts stopped, with actions disabled. Click **Start** to log physical input. Only check **Enable actions** when you want your mappings to execute. No app configures Discord keybinds for you; its corresponding hotkey must also be configured in Discord. Hotkeys use the current foreground application and may be rejected by elevated apps.
+Device control starts stopped, with Enable actions checked. Click **Start** to receive physical input and execute its saved mappings; turn Enable actions off for input-only diagnostics. Assigned hardware data collects automatically when the app opens or a profile/binding/source is saved or loaded. No app configures Discord keybinds for you; its corresponding hotkey must also be configured in Discord. Hotkeys use the current foreground application and may be rejected by elevated apps.
 
-Keep screen on is a separate experimental app checkbox, not a JSON action. It defaults off. After sending a profile, select it before listening to send one small image-mode/time update every 5 seconds while the session runs. It is intended to test the reported one-minute idle fallback; the user confirmed that the device stays awake in a session; extended duration and possible flicker still need testing. Do not add unrecognized keep-awake fields to profiles.
+Keep screen on is a separate app checkbox, not a JSON action. It defaults on and sends one small image-mode/time update every 5 seconds while the controller runs; no previous page transfer is required. It addresses the reported one-minute idle fallback. Earlier keep-awake sessions worked, but the revised startup behavior, extended duration and possible flicker still need physical testing. Do not add keep-awake fields to profiles.
 
 The dark app also lets you select any physical control and edit its mapping in the inspector. **Save changes** writes the same validated profile, without executing it or uploading display images. Developers can extend the compiled action registry using [the module API](actions-api.md).
 
@@ -65,10 +65,23 @@ Supported hotkey names: A–Z, 0–9, F1–F24, Ctrl, Alt, Shift, Win, Enter, Es
 
 Profiles are plain text: avoid storing passwords, tokens or personal secrets in them. The app does not connect to an LLM service or transmit profiles anywhere. ChatGPT/LLM customization means editing this documented file format; it requires no paid API integration.
 
+## Preview widget bindings (preview 8+, inline editor in preview 9)
+
+LCD keys may have an optional `widgets` array. Keys 0–12 accept one binding; key 13 accepts up to three distinct bindings. Old v1 profiles remain valid; older app versions reject the new field. Bindings preserve labels/icons/actions and automatically collect in the shown app; they cannot write USB. Example for key 13:
+
+```json
+"widgets": [
+  { "providerId": "d200x.system", "metricId": "cpu.usage", "sourceId": "windows.system", "unit": "percent", "label": "CPU", "precision": 0 },
+  { "providerId": "d200x.system", "metricId": "ram.usage", "sourceId": "windows.system", "unit": "percent", "label": "RAM", "precision": 0 }
+]
+```
+
+This is a property fragment inside a key, not a complete profile. IDs are bounded lowercase letters/digits with dot/hyphen separators; optional labels have at most 16 printable characters and precision is 0–2. Units are percent/celsius/usd/fps; the system provider implements CPU/RAM usage and selected CPU/GPU/hotspot log temperatures. Missing/paused/stale providers show unavailable; do not invent source IDs or place samples, monitor paths, API keys or enablement flags in profiles. Select **Key type → Hardware data**, choose values and Save changes to collect automatically. **When pressed** is optional: `{"type":"none"}` is valid for display-only keys. Assignment needs no live reading. Choosing another type removes bindings when saved. Key type is inferred from `widgets` and `action`, not a JSON field. Main/tray Stop pauses data; Start, Update screens, reload or a saved data/source change resumes it. Preview 14 uploads a snapshot of current values with labels/icons; the numbers stay static until another explicit upload. Continuous physical refresh requires transport verification. See [provider instructions](providers.md).
+
 ## Current limits
 
 The editor's **Shortcut preset** presets fill a label, icon and shortcut; **Save changes** persists them. Screenshot region uses Win+Shift+S; recording region uses Win+Shift+R to open Snipping Tool, where you choose a region and start recording. Game Bar app recording uses Win+Alt+R as a separate preset. These are Windows shortcuts, not an embedded capture engine. They depend on the installed Windows tool and its settings. Actual shortcut delivery needs physical testing.
 
-**Import profile** can import a local JSON file, copy validated custom PNGs into the profile's icons folder, and back up the previous profile as `profile.previous.json`. It disables Enable actions and does not upload a page. Stop and explicitly Update screens to display the imported page. PNGs must be at most 2 MB and 1024 pixels per side; imports are normalized to at most 512 pixels.
+**Import profile** can import a local JSON file, copy validated custom PNGs into the profile's icons folder, and back up the previous profile as `profile.previous.json`. It preserves your action-toggle choice and automatically collects imported hardware bindings without uploading a page. Stop and explicitly Update screens to display the imported page. PNGs must be at most 2 MB and 1024 pixels per side; imports are normalized to at most 512 pixels.
 
-This preview supports one active profile at a time, built-in/custom PNG key icons and profile import. Dynamic sensors, multiple device pages, automatic reconnect, custom dial-area images and automatic startup are not implemented. Physical actions, icon display and lifecycle still require validation on the D200X; automated checks alone do not establish device operation.
+This preview supports one active profile, built-in/custom PNG key icons, profile import and automatic assigned CPU/RAM/GPU load/temperature app values. Market/FPS sources, generic settings, physical live refresh, multiple pages, automatic reconnect, custom dial-area images and Windows startup remain pending. Physical actions, icon display and revised lifecycle/defaults still require validation on the D200X; automated checks alone do not establish device operation.

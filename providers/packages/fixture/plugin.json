@@ -1,0 +1,13 @@
+{
+  "manifestVersion": 1,
+  "id": "d200x.fixture",
+  "name": "Protocol fixture (TEST DATA)",
+  "version": "0.1.0",
+  "protocolVersion": 1,
+  "executable": "d200x-fixture.exe",
+  "platform": "windows-x64",
+  "capabilities": ["fixture"],
+  "metrics": [
+    { "id": "test.usage", "unit": "percent", "minimumIntervalMs": 1000, "sourceIds": ["fixture.test"] }
+  ]
+}

@@ -1,6 +1,8 @@
 # Third-party notices and protocol references
 
-The controller source is an independent C# implementation. It has no third-party NuGet package references. Its source license is MIT; see LICENSE.
+The temperature adapter independently parses the external Open Hardware Monitor CSV format described by its [Logger source](https://github.com/openhardwaremonitor/openhardwaremonitor/blob/master/Utilities/Logger.cs). No Open Hardware Monitor, LibreHardwareMonitor or sibling sensor-bridge code/binaries are redistributed. The external monitor's own licensing/setup and resource use remain separate.
+
+The controller source is an independent C# implementation. It has no third-party NuGet package references. Project C# and new Rust provider source use MIT; see LICENSE. Rust dependencies retain their own licenses. `build-providers.ps1` includes the exact locked dependency inventory and license files in each generated package; the bundled system provider carries these under `plugins/system`. No LHM library, OHM program, Studio SDK or frame collector is bundled by this implementation.
 
 Protocol research references:
 

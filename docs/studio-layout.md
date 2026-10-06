@@ -1,6 +1,6 @@
 # Recreating the previous Studio page
 
-The source includes `profiles/studio-layout.json`, a validated layout draft compatible with preview 5. Load it with Import profile, then stop and explicitly Update screens. It does not replace the installed profile or write to the device automatically. A separate private copy can contain a locally verified application path; public templates contain no personal paths.
+The source includes `profiles/studio-layout.json`, a validated layout draft for preview 11 or newer. It binds keys 10/11/12 to CPU/GPU/hotspot temperatures, requiring your own Sensor source settings; preview 12 collects these assignments automatically. Load it with Import profile, then stop and explicitly Update screens for saved labels/icons. It does not replace the installed profile or write to the device automatically. A separate private copy can contain a locally verified application path; public templates contain no personal paths. Older previews without widget bindings cannot load this updated draft.
 
 | Row | Column 1 | Column 2 | Column 3 | Column 4 | Column 5 |
 | --- | --- | --- | --- | --- | --- |
@@ -18,10 +18,12 @@ The positions, labels, colors, mute shortcut and app/website actions use existin
 
 ## Modules still required
 
-The accepted direction is a C# host with Rust executable data providers and a language-independent protocol. See [architecture](architecture.md), [protocol draft](plugin-protocol.md) and [resource requirements](performance.md). The providers, loader and continuous widget refresh are not implemented; the source choices below remain integration work. Offline-source observations in this document are dated development context, not a diagnosis for every checkout.
+The accepted direction is a C# host with Rust executable data providers and a language-independent protocol. Preview 8 implements explicit CPU/RAM app-preview collection/bindings; the public Studio draft itself is unchanged and has no bindings until assigned. See [provider usage](providers.md), [architecture](architecture.md), [experimental protocol](plugin-protocol.md) and [resource requirements](performance.md). Temperature/GPU/market/FPS sources and continuous physical widget refresh remain pending. Offline-source observations below are dated context, not a diagnosis for every checkout.
+
+The [current implementation plan](live-widgets-plan.md) lists each missing value and the acceptance checks. Later inspection confirmed that the historical monitor CSV also contains GPU core, hotspot and core-load columns, so extending one fresh-log reader is the first GPU approach. The old CPU-only adapter and stale CSV do not already supply these live values to Direct.
 
 - **Exact artwork:** preview 5 supports built-in icons and local PNG images. An exact visual match still needs the original assets or user-selected replacements.
-- **Hardware display:** connect to the existing loopback sensor bridge and/or read the existing OHM CSV, preserving explicit sensor/hardware IDs, freshness checks and `--` for unavailable data. The bridge is currently offline and the newest CSV found is from yesterday. No new sensor driver has been installed.
+- **Hardware display:** preview 11 reads selected CPU/GPU/hotspot temperatures from the existing OHM CSV directly, without the old HTTP bridge. Configure Sensor source explicitly; the newest inspected CSV remains stale, so real-source verification is pending. No new sensor driver has been installed. Values preview in the app; physical live refresh remains pending.
 - **Usage:** use read-only Windows CPU/RAM APIs and an explicit GPU data source. Keep the integrated and discrete GPUs separate.
 - **Quotes:** select a documented provider, currency, refresh rate and stale/error display. Loading a quote website does not give the app a supported quote API.
 - **FPS:** use a verified available provider. FPS is not generally obtainable from every game through a normal process counter. Existing bridge support for AMD fullscreen FPS is conditional; additional tooling has not been installed.

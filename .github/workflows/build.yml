@@ -1,0 +1,24 @@
+name: Windows checks
+on: [push, pull_request]
+jobs:
+  check:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Pinned Rust toolchain
+        shell: pwsh
+        run: rustup toolchain install 1.90.0 --profile minimal --component rustfmt,clippy
+      - name: Providers and host
+        shell: pwsh
+        run: |
+          ./build-providers.ps1
+          ./build.ps1
+          dotnet out/D200xDirectController.dll provider-check out/provider-packages/fixture
+          if ($LASTEXITCODE -ne 0) { throw 'Provider checks failed.' }
+          dotnet out/D200xDirectController.dll sensor-log-check out/provider-packages/system
+          if ($LASTEXITCODE -ne 0) { throw 'Synthetic sensor-log checks failed.' }
+          dotnet Desktop/bin/Release/net8.0-windows/D200xDirect.dll --ui-check out/provider-packages/fixture
+          if ($LASTEXITCODE -ne 0) { throw 'Editor/data lifecycle checks failed.' }

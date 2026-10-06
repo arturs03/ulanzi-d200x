@@ -11,34 +11,46 @@ internal sealed partial class MainForm : Form
     CancellationTokenSource? session;
     Mutex? deviceOwner;
     Task? sessionTask;
-    int actionsEnabled;
+    int actionsEnabled = 1;
     bool closing;
+    bool closeReady;
+    bool deviceBusy;
     bool pageSent;
     bool controllerRunning;
     bool sessionKeepsScreenOn;
+    bool sessionStopRequested;
     string ProfilePath => Path.Combine(profileDirectory, "profile.json");
 
-    public MainForm(string? configurationDirectory = null)
+    public MainForm(string? configurationDirectory = null, bool automaticData = true, D200xDirect.Providers.InstalledProvider? fixtureProvider = null)
     {
+        this.automaticData = automaticData;
+        if (fixtureProvider is not null && (fixtureProvider.Manifest.Id != "d200x.fixture" || !fixtureProvider.Manifest.Capabilities.SequenceEqual(new[] { "fixture" })))
+            throw new ArgumentException("UI checks require the purpose-built fixture provider.");
+        dataFixtureForCheck = fixtureProvider;
         profileDirectory = configurationDirectory ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "D200XDirect");
         BuildLayout();
         var trayMenu = new ContextMenuStrip();
         trayMenu.Items.Add("Open D200X Direct", null, (_, _) => ShowWindow());
-        trayMenu.Items.Add("Stop", null, (_, _) => session?.Cancel());
+        trayMenu.Items.Add("Stop", null, (_, _) => StopRequested());
         trayMenu.Items.Add("Exit", null, (_, _) => Close());
         tray = new NotifyIcon { Icon = SystemIcons.Application, Text = "D200X Direct", ContextMenuStrip = trayMenu, Visible = true };
         tray.DoubleClick += (_, _) => ShowWindow();
-        start.Click += async (_, _) => await StartSession();
-        stop.Click += (_, _) => session?.Cancel();
+        start.Click += async (_, _) => { ResumeData(); await StartSession(); };
+        stop.Click += (_, _) => StopRequested();
         sendPage.Click += async (_, _) => await SendPage();
+        screenProbe.Click += async (_, _) => await SendScreens(selectedOnly: true);
         actions.CheckedChanged += (_, _) =>
         {
             Volatile.Write(ref actionsEnabled, actions.Checked ? 1 : 0);
             if (controllerRunning) UpdateActiveStatus();
+            else if (!deviceBusy) UpdateReadyStatus();
         };
         FormClosing += OnClosing;
-        FormClosed += (_, _) => { tray.Dispose(); helpTips.Dispose(); session?.Dispose(); };
+        Shown += (_, _) => RequestDataRefresh();
+        widgetFreshness.Tick += (_, _) => RefreshWidgetValues();
+        FormClosed += (_, _) => { widgetFreshness.Dispose(); tray.Dispose(); helpTips.Dispose(); session?.Dispose(); };
         Directory.CreateDirectory(profileDirectory);
+        DiscoverWidgetChoices();
         if (!File.Exists(ProfilePath))
         {
             var starter = Path.Combine(AppContext.BaseDirectory, "profiles", "starter.json");
@@ -46,10 +58,12 @@ internal sealed partial class MainForm : Form
             else File.WriteAllText(ProfilePath, JsonSerializer.Serialize(new DeckProfile(), Profiles.JsonOptions));
         }
         ReloadProfile();
-        Log("Ready. Update screens applies your layout. Choose Start to use the controller. Actions are off until you enable them.");
+        UpdateReadyStatus();
+        Log("Ready. Assigned hardware data runs automatically. Update screens applies your layout; Start enables controller input and saved actions.");
     }
 
     void ShowWindow() { Show(); WindowState = FormWindowState.Normal; Activate(); }
+    void StopRequested() { sessionStopRequested = true; session?.Cancel(); PauseData(); }
     static void OpenText(string path) => Process.Start(new ProcessStartInfo("notepad.exe") { ArgumentList = { path }, UseShellExecute = false });
 
     void ReloadProfile()
@@ -62,6 +76,7 @@ internal sealed partial class MainForm : Form
             RefreshDeck();
             SelectControl(selectedIndex);
             Log($"Loaded profile: {candidate.Name}. Dials: {candidate.Dials.Count}; side buttons: {candidate.SideButtons.Count}. Device display is updated separately.");
+            RequestDataRefresh();
         }
         catch (Exception error) { Log($"Profile rejected; current mappings kept. {error.Message}"); }
     }
@@ -96,7 +111,9 @@ internal sealed partial class MainForm : Form
     }
 
     void ReleaseDevice() { deviceOwner?.ReleaseMutex(); deviceOwner?.Dispose(); deviceOwner = null; }
-    void SetBusy(bool busy) { start.Visible = !busy; stop.Visible = busy; start.Enabled = sendPage.Enabled = keepAwake.Enabled = !busy; stop.Enabled = busy; }
+    void SetBusy(bool busy) { deviceBusy = busy; start.Visible = !busy; start.Enabled = sendPage.Enabled = keepAwake.Enabled = !busy; UpdateScreenProbe(); UpdateStopControl(); }
+    void UpdateStopControl() => stop.Visible = stop.Enabled = deviceBusy || dataTask is not null || dataChangeTask is not null;
+    void UpdateReadyStatus() => SetStatus("Ready", $"Choose Start to use the controller. Actions are {(actions.Checked ? "on" : "off")}.");
 
     void UpdateActiveStatus() => SetStatus("Active", $"Actions {(actions.Checked ? "on" : "off")} · {(sessionKeepsScreenOn ? "Keeping screen on" : "Screen may return to default")}", true);
 
@@ -108,8 +125,7 @@ internal sealed partial class MainForm : Form
             AcquireDevice();
             var device = SelectDevice();
             var sendKeepAwake = keepAwake.Checked;
-            if (sendKeepAwake && !pageSent) throw new IOException("Choose Update screens first, then Start with Keep screen on enabled.");
-            session = new CancellationTokenSource();
+            sessionStopRequested = false; session = new CancellationTokenSource();
             var token = session.Token;
             SetBusy(true);
             controllerRunning = true; sessionKeepsScreenOn = sendKeepAwake; UpdateActiveStatus();
@@ -143,7 +159,7 @@ internal sealed partial class MainForm : Form
                 if (writer is null) await ReadInput(token);
                 else
                 {
-                    Log("Keep screen on active. Leave the app open or hide it to the tray. Screen updates run every 5 seconds.");
+                    Log("Keep screen on active. Leave the app open or hide it to the tray. Keep-awake signals run every 5 seconds; displayed values change when you update screens.");
                     var count = 0;
                     await DeviceSession.RunPairAsync(ReadInput, ct => DeviceSession.KeepAwakeAsync(async writeToken =>
                     {
@@ -165,55 +181,83 @@ internal sealed partial class MainForm : Form
             session?.Dispose(); session = null;
             ReleaseDevice();
             SetBusy(false);
-            SetStatus("Ready", "Choose Start to use the controller. Enable actions allows shortcuts to run.");
+            UpdateReadyStatus();
         }
     }
 
-    async Task SendPage()
+    Task SendPage() => SendScreens();
+
+    async Task SendScreens(bool selectedOnly = false)
     {
         if (sessionTask is not null) return;
+        if (selectedOnly && (!pageSent || selectedIndex > 13)) { Log("Choose Update screens first, then select an LCD key for the one-shot test."); return; }
         try
         {
             AcquireDevice();
             var device = SelectDevice();
             var snapshot = Volatile.Read(ref profile);
             Profiles.Validate(snapshot);
+            var selectedKey = selectedIndex;
+            ResumeData();
             SetBusy(true);
-            SetStatus("Updating", "Sending saved labels and icons to the device…");
-            session = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+            SetStatus("Updating", selectedOnly ? "Testing one selected screen…" : "Preparing a snapshot of current values…");
+            sessionStopRequested = false; session = new CancellationTokenSource(TimeSpan.FromSeconds(30));
             var token = session.Token;
-            sessionTask = Task.Run(async () =>
-            {
-                // Build and validate the entire bundle before opening the writable device.
-                var bundle = ProfileImages.Bundle(snapshot, profileDirectory);
-                using var stream = HidDevice.Open(device, true);
-                foreach (var packet in Protocol.DisplayPackets(bundle))
-                    await stream.WriteAsync(Protocol.WindowsReport(packet), token);
-                await stream.FlushAsync(token);
-                Log($"Screen data sent: {snapshot.Name} ({bundle.Length} bytes). Check the physical screens to confirm it applied.");
-            }, token);
+            sessionTask = PrepareAndSendScreensAsync(snapshot, device, selectedOnly, selectedKey, token);
             await sessionTask;
             pageSent = true;
         }
+        catch (OperationCanceledException) when (sessionStopRequested || closing) { pageSent = false; Log("Screen update canceled."); }
+        catch (OperationCanceledException) { pageSent = false; Log("Screen update timed out after 30 seconds. Check the device, then try Update screens again."); }
         catch (Exception error) { pageSent = false; Log($"Screen update stopped: {error.Message}"); }
         finally
         {
             sessionTask = null;
             session?.Dispose(); session = null;
-            ReleaseDevice(); SetBusy(false); SetStatus("Ready", pageSent ? "Check the device screens. Enable Keep screen on, then Start." : "Screen update failed. See Activity for details.");
+            ReleaseDevice(); SetBusy(false); SetStatus("Ready", pageSent ? "Snapshot sent. Automatic physical refresh needs verification." : sessionStopRequested ? "Screen update canceled. Choose Update screens to try again." : "Screen update failed. See Activity for details.");
         }
+    }
+
+    async Task PrepareAndSendScreensAsync(DeckProfile snapshot, HidInterface device, bool selectedOnly, int selectedKey, CancellationToken token)
+    {
+        await Task.Yield(); // Assign sessionTask before pending data or transfer work begins.
+        await WaitForDisplayDataAsync(snapshot, token);
+        var readings = CaptureDisplayReadings(snapshot);
+        var saved = snapshot.Keys.FirstOrDefault(k => k.Index == selectedKey) ?? new KeyConfig { Index = selectedKey };
+        var probe = new KeyConfig { Index = saved.Index, Label = ("TEST " + saved.Label)[..Math.Min(64, 5 + saved.Label.Length)],
+            Background = saved.Background, Icon = saved.Icon, Widgets = saved.Widgets, Action = saved.Action };
+        await Task.Run(async () =>
+        {
+            // Build/validate before opening the writable device. Profiles never receive runtime values.
+            var bundle = selectedOnly ? ProfileImages.SelectedKeyBundle(probe, profileDirectory, readings)
+                : ProfileImages.Bundle(snapshot, profileDirectory, readings);
+            var packets = (selectedOnly ? Protocol.KeyImagePackets(bundle) : Protocol.DisplayPackets(bundle)).ToArray();
+            token.ThrowIfCancellationRequested();
+            using var stream = HidDevice.Open(device, true);
+            foreach (var packet in packets) await stream.WriteAsync(Protocol.WindowsReport(packet), token);
+            await stream.FlushAsync(token);
+            Log(selectedOnly
+                ? $"One-shot key {selectedKey:D2} test sent ({bundle.Length} bytes, {packets.Length} packets). Confirm its TEST label and values; other screens should stay unchanged. No automatic refresh is enabled."
+                : $"Screen snapshot sent: {snapshot.Name} ({bundle.Length} bytes). Hardware keys include current values or -- when unavailable. This is a snapshot, not automatic refresh.");
+        }, token);
     }
 
     async void OnClosing(object? sender, FormClosingEventArgs e)
     {
-        if (closing) return;
-        if (sessionTask is null) return;
+        if (closeReady) return;
+        if (closing) { e.Cancel = true; return; }
+        closing = true;
+        sessionStopRequested = true;
+        PauseData();
+        if (sessionTask is null && dataTask is null && dataChangeTask is null && dataRun is null) return;
         e.Cancel = true;
         session?.Cancel();
-        try { await sessionTask; } catch { }
+        if (sessionTask is { } deviceTask) { try { await deviceTask; } catch { } }
+        if (dataChangeTask is { } changeTask) await changeTask;
+        await StopDataAsync();
         // Let the session continuation release its mutex on the UI thread.
         await Task.Yield();
-        closing = true;
+        closeReady = true;
         Close();
     }
 

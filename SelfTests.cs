@@ -8,6 +8,7 @@ public static class SelfTests
 {
     public static void Run()
     {
+        Providers.ProviderChecks.RunPure();
         var checks = 0;
         void Check(bool valid, string name) { if (!valid) throw new Exception($"Self-test failed: {name}"); checks++; }
         var payload = Enumerable.Range(0, 500).Select(i => (byte)(i % 256)).ToArray();

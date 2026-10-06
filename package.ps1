@@ -2,6 +2,12 @@
 param()
 $ErrorActionPreference = 'Stop'
 $dotnetCommand = Get-Command dotnet -ErrorAction Stop
+& (Join-Path $PSScriptRoot 'build-providers.ps1')
+& (Join-Path $PSScriptRoot 'build.ps1')
+& $dotnetCommand.Source (Join-Path $PSScriptRoot 'out/D200xDirectController.dll') provider-check (Join-Path $PSScriptRoot 'out/provider-packages/fixture')
+if ($LASTEXITCODE -ne 0) { throw 'Provider conformance checks failed.' }
+& $dotnetCommand.Source (Join-Path $PSScriptRoot 'out/D200xDirectController.dll') sensor-log-check (Join-Path $PSScriptRoot 'out/provider-packages/system')
+if ($LASTEXITCODE -ne 0) { throw 'Synthetic sensor-log checks failed.' }
 [xml]$projectDocument = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'DirectController.csproj') -Raw
 $version = [string]$projectDocument.Project.PropertyGroup.Version
 if ($version -notmatch '^\d+\.\d+\.\d+(-[a-zA-Z0-9.]+)?$') { throw 'Unexpected package version.' }
@@ -14,6 +20,8 @@ New-Item -ItemType Directory -Path $workDirectory, $releaseDirectory -Force | Ou
 # Reuse the existing SDK. Restore may fetch runtime build packs; it installs no system runtime.
 & $dotnetCommand.Source publish (Join-Path $PSScriptRoot 'Desktop/D200xDirect.App.csproj') -c Release -r win-x64 --self-contained true -p:DebugType=None -o $appDirectory
 if ($LASTEXITCODE -ne 0) { throw 'App publish failed.' }
+$uiCheck = Start-Process -FilePath (Join-Path $appDirectory 'D200xDirect.exe') -ArgumentList @('--ui-check', ('"' + (Join-Path $PSScriptRoot 'out/provider-packages/fixture') + '"')) -WindowStyle Hidden -Wait -PassThru
+if ($uiCheck.ExitCode -ne 0) { throw 'Published editor/data lifecycle checks failed.' }
 foreach ($name in @('profiles', 'docs')) {
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot $name) -Destination $appDirectory -Recurse -Force
 }
@@ -72,8 +80,8 @@ $sourceStream = [IO.File]::Open($sourceArchive, [IO.FileMode]::Create)
 $sourceZip = New-Object IO.Compression.ZipArchive($sourceStream, [IO.Compression.ZipArchiveMode]::Create, $false)
 try {
     $rootFiles = Get-ChildItem -LiteralPath $PSScriptRoot -File | Where-Object { $_.Name -in @('.gitignore', '.gitattributes', 'LICENSE') -or $_.Extension -in @('.cs', '.csproj', '.ps1', '.md', '.cmd') }
-    $nestedFiles = foreach ($folder in @('Desktop', 'Installer', 'profiles', 'docs', '.agents/skills')) {
-        Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot $folder) -File -Recurse | Where-Object { $_.FullName -notmatch '[\\/](bin|obj)[\\/]' }
+    $nestedFiles = foreach ($folder in @('Desktop', 'Installer', 'ProviderHost', 'providers', 'schemas', 'profiles', 'docs', '.agents/skills', '.github')) {
+        Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot $folder) -File -Recurse | Where-Object { $_.FullName -notmatch '[\\/](bin|obj|target)[\\/]' }
     }
     foreach ($file in @($rootFiles) + @($nestedFiles)) {
         $entry = $file.FullName.Substring($PSScriptRoot.Length + 1).Replace('\', '/')

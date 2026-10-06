@@ -6,7 +6,7 @@ Start with [README.md](README.md), [architecture](docs/architecture.md) and [eng
 
 Use Windows and the .NET 8 SDK, then run `./build.ps1` from the repository root. There are currently no third-party NuGet package references. Automated core checks run as part of the build and can be repeated with `./run.ps1 -Mode self-test`. UI/icon/import changes also use the isolated desktop `--ui-check` path and visual inspection; see [engineering standards](docs/engineering.md).
 
-The accepted direction is C# for the host and Rust for bundled data-provider executables. The plugin folder loader, Rust workspace and live widgets do not exist yet. Read the [protocol draft](docs/plugin-protocol.md) before implementing them; do not present draft examples as working configuration. Other languages may implement the same process protocol. Rust setup and conditional checks are documented in [engineering standards](docs/engineering.md); ordinary host contributors do not need Rust today.
+The C# host now has an experimental provider supervisor/preview UI; the Rust workspace supplies protocol helpers, a failure fixture and CPU/RAM system usage. Read [provider build/use instructions](docs/providers.md) and the [experimental protocol](docs/plugin-protocol.md). Temperatures/GPU, markets/FPS, dynamic settings and physical live refresh remain pending. Other languages may implement the process protocol. Host-only checks need no Rust; provider/release checks use the pinned toolchain and Microsoft C++ x64 build tools.
 
 ## Change expectations
 
@@ -20,7 +20,7 @@ Before submitting, state the validation performed, any compatibility consequence
 
 Keep direct HID operations explicit. The default command must only inspect; automated checks must never open a device. Preserve the Studio-running check, single-controller guard and exact report-capability selection. Do not silently add firmware commands, drivers, background startup, network access or keyboard injection.
 
-Future providers require explicit enablement, bounded I/O and stop/exit cleanup. Device ownership remains with the host. New collector/driver-dependent setup, elevation, services, startup and Windows security changes are separate decisions. Read [stability](docs/stability.md) before device work; [architecture](docs/architecture.md) describes the future live-refresh gate.
+In the shown app, saved hardware assignments automatically start trusted providers. Metadata discovery alone must not execute them. Preserve bounded I/O, serialized replacement and stop/exit cleanup. Device ownership remains with the host. New collector/driver-dependent setup, elevation, services, Windows startup and security changes are separate decisions. Read [stability](docs/stability.md) before device work; [architecture](docs/architecture.md) describes the future live-refresh gate.
 
 ## Physical reports
 

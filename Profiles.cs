@@ -19,6 +19,7 @@ public sealed class KeyConfig
     public string Label { get; set; } = "";
     public string Background { get; set; } = "#102038";
     public string? Icon { get; set; }
+    public List<WidgetBinding>? Widgets { get; set; }
     public DeckAction Action { get; set; } = new();
 }
 
@@ -84,6 +85,14 @@ public static class Profiles
                 throw new ArgumentException("LCD key indices must be unique, 0–13.");
             Label(key.Label);
             IconReferences.Validate(key.Icon);
+            if (key.Widgets is not null)
+            {
+                if (key.Widgets.Count is < 1 || key.Widgets.Count > (key.Index == 13 ? 3 : 1)
+                    || key.Widgets.Any(w => w is null)
+                    || key.Widgets.Select(w => (w.ProviderId, w.MetricId, w.SourceId)).Distinct().Count() != key.Widgets.Count)
+                    throw new ArgumentException("Choose one widget per key, or up to three distinct widgets for key 13.");
+                foreach (var widget in key.Widgets) widget.Validate();
+            }
             if (key.Background is null || !Regex.IsMatch(key.Background, "^#[0-9a-fA-F]{6}$"))
                 throw new ArgumentException($"Key {key.Index}: background must be #RRGGBB.");
             ValidateAction(key.Action);

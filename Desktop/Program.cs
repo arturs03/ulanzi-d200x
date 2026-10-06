@@ -5,14 +5,16 @@ internal static class Program
     [STAThread]
     static void Main(string[] args)
     {
+        if (args.Length > 0 && args[0] == "--ui-check") Application.SetUnhandledExceptionMode(UnhandledExceptionMode.ThrowException);
         ApplicationConfiguration.Initialize();
-        if (args.SequenceEqual(new[] { "--ui-check" }))
+        if (args.SequenceEqual(new[] { "--ui-check" }) || (args.Length == 2 && args[0] == "--ui-check"))
         {
             var fixtureDirectory = Path.Combine(AppContext.BaseDirectory, "ui-check-profile");
             Directory.CreateDirectory(fixtureDirectory);
             var starter = Path.Combine(AppContext.BaseDirectory, "profiles", "starter.json");
             File.Copy(starter, Path.Combine(fixtureDirectory, "profile.json"), true);
             IconChecks.Run(fixtureDirectory);
+            DisplayChecks.Run(fixtureDirectory);
             SurfaceChecks.Run();
             var profile = Profiles.Parse(File.ReadAllText(starter));
             var bundle = ProfileImages.Bundle(profile, fixtureDirectory);
@@ -35,21 +37,40 @@ internal static class Program
                     }
                 }
             }
-            using var form = new MainForm(fixtureDirectory);
-            form.Show();
-            Application.DoEvents();
-            Capture("ui-check.png");
-            form.CheckEditor();
-            form.CheckProfileImport();
-            Application.DoEvents();
-            form.PerformLayout();
-            File.WriteAllText(Path.Combine(AppContext.BaseDirectory, "ui-check-layout.txt"), $"DPI {form.DeviceDpi}; size {form.ClientSize}; scaling {form.AutoScaleDimensions}");
-            Capture("ui-check-editor.png");
-            form.Size = form.MinimumSize;
-            Application.DoEvents();
-            form.CheckCompactLayout();
-            Capture("ui-check-compact.png");
-            form.Close();
+            using var form = new MainForm(fixtureDirectory, automaticData: false);
+            Exception? checkError = null;
+            form.Shown += async (_, _) =>
+            {
+                try
+                {
+                    Capture("ui-check.png");
+                    await SelectChecks.RunAsync();
+                    form.CheckEditor();
+                    form.CheckProfileImport();
+                    form.CheckWidgetPreview();
+                    form.CheckScreenProbeGuards();
+                    SensorSourceForm.CheckWithFixtures(form, Path.Combine(AppContext.BaseDirectory, "ui-check-sensor-source.png"));
+                    if (args.Length == 2)
+                    {
+                        await form.CheckDataLifecycleAsync(Path.GetFullPath(args[1]));
+                        await form.CheckAutomaticDataAsync(Path.GetFullPath(args[1]));
+                    }
+                    form.ShowDataEditorCheck();
+                    Capture("ui-check-data-editor.png");
+                    form.PerformLayout();
+                    File.WriteAllText(Path.Combine(AppContext.BaseDirectory, "ui-check-layout.txt"), $"DPI {form.DeviceDpi}; size {form.ClientSize}; scaling {form.AutoScaleDimensions}");
+                    Capture("ui-check-editor.png");
+                    form.Size = form.MinimumSize;
+                    form.PerformLayout();
+                    form.CheckCompactLayout();
+                    Capture("ui-check-compact.png");
+                }
+                catch (Exception error) { checkError = error; }
+                finally { form.Close(); }
+            };
+            // Use the production message loop so await continuations retain UI-thread affinity.
+            Application.Run(form);
+            if (checkError is not null) System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(checkError).Throw();
             return;
 
             void Capture(string name)

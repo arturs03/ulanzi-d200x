@@ -1,0 +1,18 @@
+{
+  "manifestVersion": 1,
+  "id": "d200x.system",
+  "name": "System data",
+  "version": "0.3.0",
+  "protocolVersion": 1,
+  "executable": "d200x-system.exe",
+  "platform": "windows-x64",
+  "capabilities": ["read-windows-usage", "read-ohm-log"],
+  "metrics": [
+    { "id": "cpu.usage", "unit": "percent", "minimumIntervalMs": 1000, "sourceIds": ["windows.system"] },
+    { "id": "ram.usage", "unit": "percent", "minimumIntervalMs": 1000, "sourceIds": ["windows.system"] },
+    { "id": "gpu.usage", "unit": "percent", "minimumIntervalMs": 1000, "sourceIds": ["monitor.local"] },
+    { "id": "cpu.temperature", "unit": "celsius", "minimumIntervalMs": 1000, "sourceIds": ["monitor.local"] },
+    { "id": "gpu.temperature", "unit": "celsius", "minimumIntervalMs": 1000, "sourceIds": ["monitor.local"] },
+    { "id": "gpu.hotspot", "unit": "celsius", "minimumIntervalMs": 1000, "sourceIds": ["monitor.local"] }
+  ]
+}

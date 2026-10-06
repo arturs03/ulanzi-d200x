@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "D200X Direct experimental provider manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["manifestVersion", "id", "name", "version", "protocolVersion", "executable", "platform", "capabilities", "metrics"],
+  "properties": {
+    "manifestVersion": { "const": 1 },
+    "protocolVersion": { "const": 1 },
+    "id": { "$ref": "#/$defs/id" },
+    "name": { "type": "string", "minLength": 1, "maxLength": 80, "pattern": "^[^\\u0000-\\u001f\\u007f-\\u009f]*$" },
+    "version": { "type": "string", "maxLength": 64, "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:-[a-zA-Z0-9.]+)?$" },
+    "executable": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,95}\\.exe$" },
+    "platform": { "const": "windows-x64" },
+    "capabilities": { "type": "array", "maxItems": 16, "uniqueItems": true, "items": { "$ref": "#/$defs/id" } },
+    "metrics": {
+      "type": "array", "minItems": 1, "maxItems": 64,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["id", "unit", "minimumIntervalMs", "sourceIds"],
+        "properties": {
+          "id": { "$ref": "#/$defs/id" },
+          "unit": { "enum": ["percent", "celsius", "usd", "fps"] },
+          "minimumIntervalMs": { "type": "integer", "minimum": 1000, "maximum": 86400000 },
+          "sourceIds": { "type": "array", "minItems": 1, "maxItems": 64, "uniqueItems": true, "items": { "$ref": "#/$defs/id" } }
+        }
+      }
+    }
+  },
+  "$defs": { "id": { "type": "string", "maxLength": 96, "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$" } }
+}

@@ -1,5 +1,6 @@
 using System.Text.Json;
 using D200xDirect;
+using D200xDirect.Providers;
 
 try
 {
@@ -12,6 +13,9 @@ try
             Commands:
               inspect              List connected D200X HID interfaces (default).
               self-test            Run automated checks without hardware access.
+              provider-check <folder>  Test the purpose-built Rust fixture package (no USB).
+              sensor-log-check <folder>  Test the system adapter with synthetic CSV logs only.
+              provider-preview <folder> [samples]  Explicitly collect provider values (no USB).
               listen [seconds]     Log buttons/dials; fully exit Studio first.
               test-page [seconds]  Send temporary TEST 00–13 images, then listen.
               preview <PNG path>   Save a test icon without accessing hardware.
@@ -27,13 +31,49 @@ try
             .OfType<System.Reflection.AssemblyInformationalVersionAttribute>().Single().InformationalVersion);
         return 0;
     }
-    if (command is not ("inspect" or "self-test" or "preview" or "listen" or "test-page"))
+    if (command is not ("inspect" or "self-test" or "preview" or "listen" or "test-page" or "provider-check" or "provider-preview" or "sensor-log-check"))
         throw new ArgumentException("Unknown command. Use --help to list commands.");
     if (command is "inspect" or "self-test" && args.Length > 1)
         throw new ArgumentException($"Usage: {command}");
     if (command is "listen" or "test-page" && args.Length > 2)
         throw new ArgumentException($"Usage: {command} [seconds]");
     if (command == "self-test") { SelfTests.Run(); return 0; }
+    if (command == "sensor-log-check")
+    {
+        if (args.Length != 2) throw new ArgumentException("Usage: sensor-log-check <system package folder>");
+        await ProviderChecks.RunSensorLogAsync(Path.GetFullPath(args[1])); return 0;
+    }
+    if (command == "provider-check")
+    {
+        if (args.Length != 2) throw new ArgumentException("Usage: provider-check <fixture package folder>");
+        await ProviderChecks.RunFixturesAsync(args[1]);
+        return 0;
+    }
+    if (command == "provider-preview")
+    {
+        if (args.Length is < 2 or > 3) throw new ArgumentException("Usage: provider-preview <provider folder> [samples]");
+        var installed = ProviderDiscovery.Load(args[1]);
+        if (installed.Manifest.Capabilities.Contains("fixture")) Console.Error.WriteLine("TEST DATA: this provider does not read hardware.");
+        var count = args.Length == 3 ? int.Parse(args[2]) : 3;
+        if (count is < 1 or > 60) throw new ArgumentException("Use 1–60 samples.");
+        var selected = installed.Manifest.Metrics.Select(x => new MetricSelection(x.Id, x.SourceIds[0])).ToArray();
+        var interval = installed.Manifest.Metrics.Max(x => x.MinimumIntervalMs);
+        if (interval > 5000) throw new ArgumentException("This short preview command supports intervals up to 5 seconds.");
+        using var cancel = new CancellationTokenSource(TimeSpan.FromMinutes(6));
+        ConsoleCancelEventHandler handler = (_, e) => { e.Cancel = true; cancel.Cancel(); };
+        Console.CancelKeyPress += handler;
+        try
+        {
+            await using var provider = await ProviderProcess.StartAsync(installed, cancel.Token);
+            for (var index = 0; index < count; index++)
+            {
+                if (index > 0) await Task.Delay(interval, cancel.Token);
+                Console.WriteLine(JsonSerializer.Serialize(await provider.SnapshotAsync(selected, cancel.Token), ProviderContract.Json));
+            }
+        }
+        finally { Console.CancelKeyPress -= handler; }
+        return 0;
+    }
     if (command == "preview")
     {
         if (args.Length != 2) throw new ArgumentException("Usage: preview <PNG path>");

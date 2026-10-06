@@ -5,11 +5,12 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AssemblyName>D200xDirectController</AssemblyName>
-    <Version>0.1.0-preview.7</Version>
+    <Version>0.1.0-preview.17</Version>
     <Description>Experimental Windows USB diagnostic controller for the Ulanzi D200X.</Description>
     <Product>D200X Direct</Product>
     <Copyright>Copyright (c) 2026 D200X Direct contributors</Copyright>
     <Deterministic>true</Deterministic>
+    <DefaultItemExcludes>$(DefaultItemExcludes);out/**;releases/**;.tools/**;providers/target/**</DefaultItemExcludes>
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="Desktop/**/*.cs" />

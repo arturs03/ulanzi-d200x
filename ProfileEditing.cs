@@ -4,6 +4,17 @@ namespace D200xDirect;
 
 public static class ProfileEditing
 {
+    public static DeckProfile UpdateWidgets(DeckProfile original, int index, IReadOnlyList<WidgetBinding>? bindings)
+    {
+        if (index is < 0 or > 13) throw new ArgumentException("Widgets need an LCD key, 0–13.");
+        var copy = Profiles.Parse(JsonSerializer.Serialize(original, Profiles.JsonOptions));
+        var key = copy.Keys.FirstOrDefault(k => k.Index == index);
+        if (key is null) { key = new KeyConfig { Index = index }; copy.Keys.Add(key); }
+        key.Widgets = bindings is { Count: > 0 } ? bindings.ToList() : null;
+        Profiles.Validate(copy);
+        return copy;
+    }
+
     // Return a validated copy. A rejected edit must never mutate live mappings.
     public static DeckProfile Update(DeckProfile original, int index, string gesture,
         string label, string background, DeckAction action, KeyAppearance? appearance = null)

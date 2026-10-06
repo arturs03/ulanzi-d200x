@@ -78,9 +78,20 @@ public static class Protocol
     }
 
     public static IEnumerable<byte[]> BundlePackets(byte[] bundle)
+        => TransferPackets(bundle, 0x0001);
+
+    // Documented D200 small-image command. Available only to an explicit one-shot D200X probe.
+    public const int MaximumKeyImageBytes = 65_536;
+    public static IEnumerable<byte[]> KeyImagePackets(byte[] bundle)
+    {
+        if (bundle.Length > MaximumKeyImageBytes) throw new ArgumentException("Selected screen update exceeds 64 KiB.");
+        foreach (var packet in TransferPackets(bundle, 0x000d)) yield return packet;
+    }
+
+    static IEnumerable<byte[]> TransferPackets(byte[] bundle, ushort command)
     {
         if (bundle.Length == 0 || !CleanBoundaries(bundle)) throw new ArgumentException("Invalid bundle boundaries.");
-        yield return Packet(0x0001, bundle.AsSpan(0, Math.Min(bundle.Length, FirstPayloadSize)), (uint)bundle.Length);
+        yield return Packet(command, bundle.AsSpan(0, Math.Min(bundle.Length, FirstPayloadSize)), (uint)bundle.Length);
         for (var offset = FirstPayloadSize; offset < bundle.Length; offset += PacketSize)
         {
             var chunk = new byte[PacketSize];

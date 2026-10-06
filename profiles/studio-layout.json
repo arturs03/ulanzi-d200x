@@ -118,7 +118,8 @@
       "action": {
         "type": "none"
       },
-      "icon": "builtin:temperature"
+      "icon": "builtin:temperature",
+      "widgets": [{ "providerId": "d200x.system", "metricId": "cpu.temperature", "sourceId": "monitor.local", "unit": "celsius", "label": "CPU", "precision": 0 }]
     },
     {
       "index": 11,
@@ -127,7 +128,8 @@
       "action": {
         "type": "none"
       },
-      "icon": "builtin:temperature"
+      "icon": "builtin:temperature",
+      "widgets": [{ "providerId": "d200x.system", "metricId": "gpu.temperature", "sourceId": "monitor.local", "unit": "celsius", "label": "GPU", "precision": 0 }]
     },
     {
       "index": 12,
@@ -136,16 +138,22 @@
       "action": {
         "type": "none"
       },
-      "icon": "builtin:temperature"
+      "icon": "builtin:temperature",
+      "widgets": [{ "providerId": "d200x.system", "metricId": "gpu.hotspot", "sourceId": "monitor.local", "unit": "celsius", "label": "Hotspot", "precision": 0 }]
     },
     {
       "index": 13,
-      "label": "CPU --% / RAM --% / GPU --%",
+      "label": "Usage",
       "background": "#102038",
       "action": {
         "type": "none"
       },
-      "icon": "builtin:usage"
+      "icon": "builtin:usage",
+      "widgets": [
+        { "providerId": "d200x.system", "metricId": "cpu.usage", "sourceId": "windows.system", "unit": "percent", "label": "CPU", "precision": 0 },
+        { "providerId": "d200x.system", "metricId": "ram.usage", "sourceId": "windows.system", "unit": "percent", "label": "RAM", "precision": 0 },
+        { "providerId": "d200x.system", "metricId": "gpu.usage", "sourceId": "monitor.local", "unit": "percent", "label": "GPU", "precision": 0 }
+      ]
     }
   ],
   "dials": [
